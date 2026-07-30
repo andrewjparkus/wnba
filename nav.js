@@ -9,7 +9,7 @@
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
  * Top bar (flattened 2026-07-26; Draft retired 2026-07-27 — four tabs, no dropdown):
- *     Explorer · Tables · Model      (WNBA fork: no forward product)
+ *     Explorer · Tables · Rest of 2026 · Model      (WNBA fork)
  *
  * The standalone Draft page is GONE, not hidden: its board was superseded by the "2026 Draft
  * Class" table on table.html, so there is no page left to keep reachable (owner 2026-07-27).
@@ -65,12 +65,13 @@
 (function () {
   "use strict";
 
-  // THREE tabs. The men's fourth is the 2026-27 forward product, which needs a WNBA game
-  // model, a minutes model and a schedule spine -- none of which exist. A tab that opens an
-  // empty page is worse than an absent one.
+  // FOUR tabs, same shape as the men's, but the forward product is the REST of 2026 rather
+  // than a next season: the WNBA season is in progress at the board's last day, so what a
+  // WNBA reader wants projected is the 128 games that remain, not 2027. Hence the label.
   var TABS = [
     { key: "explorer", href: "index.html", label: "Explorer" },
     { key: "tables",   href: "table.html", label: "Tables" },
+    { key: "proj",     href: "projection.html", label: "Rest of 2026" },
     { key: "model",    href: "model.html", label: "Model" }
   ];
 

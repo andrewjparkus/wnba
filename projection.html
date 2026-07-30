@@ -1,0 +1,370 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rest of 2026 — WNBA Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* HAND-WRITTEN, not forked. fork_site_html.py only writes index/table/site.css/nav.js/
+     manifest/team_colors, so this file is safe from a fork run -- same arrangement as
+     model.html. The men's projection.html was NOT a viable fork source: its spine is a
+     5-year player trajectory model and a 30-team East/West split, neither of which exists
+     here, so a fork would have been mostly deletions around a misleading skeleton.
+     Everything visual comes from the shared tokens and .wrap/.tbl/.scroll/.callout/.kpi.
+     ONE accent carries every quantitative fill; no second hue, no ramps. */
+  .pj-note{color:var(--muted);font-size:var(--fs-2);line-height:1.55;max-width:840px;margin:10px 0}
+  .pj-sec{font-size:var(--fs-3);font-weight:700;color:#aebccd;margin:26px 0 8px;letter-spacing:.2px}
+  :root[data-theme=light] .pj-sec{color:#33425a}
+  /* odds cell: a bar drawn as a background gradient, so the number stays selectable text and
+     the cell needs no SVG. Right-aligned like every other numeric cell. */
+  .pj-odds{position:relative;font-family:var(--font-mono)}
+  .pj-odds span{position:relative;z-index:1}
+  .pj-odds i{position:absolute;left:0;top:3px;bottom:3px;background:var(--accent);opacity:.20;
+    border-radius:2px;z-index:0}
+  .pj-hist{width:104px;height:20px;display:block}
+  .pj-tri{font-weight:700}
+  tr.pj-row{cursor:pointer}
+  tr.pj-row.on>td{background:var(--panel-3)}
+  .pj-detail{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);
+    padding:var(--sp-4);margin-top:var(--sp-4)}
+  .pj-detail h3{font-size:var(--fs-4);margin:0 0 2px;font-weight:700}
+  .pj-detail .pj-note{margin-top:4px}
+  .pj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--sp-4);
+    margin-top:var(--sp-3)}
+  .pj-bars{list-style:none;padding:0;margin:8px 0 0}
+  .pj-bars li{display:flex;align-items:center;gap:10px;padding:3px 0;font-size:13.5px}
+  .pj-bars .nm{width:118px;flex:0 0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pj-bars .tr{flex:1 1 auto;height:9px;background:var(--grid);border-radius:2px;overflow:hidden}
+  .pj-bars .tr i{display:block;height:100%;background:var(--accent);border-radius:2px}
+  .pj-bars .vv{width:52px;flex:0 0 auto;text-align:right;font-family:var(--font-mono);
+    font-size:12.5px;color:var(--muted)}
+  .pj-msg{color:var(--muted);font-size:var(--fs-3);margin-top:var(--sp-5)}
+  @media(max-width:560px){ .pj-hist{width:64px} .pj-bars .nm{width:92px} }
+  /* Staleness warning, derived at render time from the viewer's clock -- see render().
+     Amber rather than red: the page is not WRONG, it is behind, and a red banner on a
+     projection reads as "these numbers are broken". */
+  .stalewarn{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:var(--r-1);
+    background:rgba(255,145,56,.14);border:1px solid rgba(255,145,56,.34);
+    color:#ffb877;font-size:var(--fs-1);font-weight:600}
+  :root[data-theme=light] .stalewarn{background:rgba(192,86,0,.12);
+    border-color:rgba(192,86,0,.3);color:#8a3d00}
+</style></head>
+<body>
+<nav id="topnav" data-active="proj"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+
+<div class="wrap">
+  <h1 style="margin-top:6px">Rest of <b>2026</b></h1>
+  <p class="sub" id="sub">Loading projection…</p>
+
+  <div class="kpis" id="kpis"></div>
+
+  <!-- The two disclosures that must not be buried. Both are read out of the JSON, so neither
+       can outlive the fact it describes. -->
+  <div class="callout" id="fmtCallout" hidden></div>
+  <div class="callout" id="lvlCallout" hidden style="margin-top:10px"></div>
+
+  <div class="pj-sec">Projected standings</div>
+  <p class="pj-note" id="tblNote"></p>
+  <div class="scroll">
+    <table class="tbl" id="stand">
+      <thead><tr>
+        <th>#</th><th class="l">Team</th>
+        <th>W</th><th>L</th><th>Rem</th><th>PD</th>
+        <th class="grp">Strength</th>
+        <th class="grp">Proj W</th><th>Proj L</th><th>80% band</th><th class="l">Win total</th>
+        <th class="grp">Playoffs</th><th>Semis</th><th>Finals</th><th>Title</th>
+        <th class="grp">Seed</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="cap" id="tblCap"></p>
+
+  <div id="detail"></div>
+
+  <div class="pj-sec">Title odds</div>
+  <ul class="pj-bars" id="titleBars"></ul>
+  <p class="cap" id="titleCap"></p>
+
+  <div class="pj-sec">What this projection does not know</div>
+  <ul class="pj-note" id="caveats"></ul>
+  <p class="foot" id="foot"></p>
+  <div class="pj-msg" id="msg">Loading projection…</div>
+</div>
+
+<script>
+"use strict";
+const el = RC.el;
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g,
+  c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const n1 = v => Number(v).toFixed(1);
+// The site prints a typographic minus everywhere else; match it.
+const sgn = (v, d) => (Number(v) >= 0 ? "+" : "−") + Math.abs(Number(v)).toFixed(d == null ? 2 : d);
+const pc = p => (Number(p) * 100).toFixed(1) + "%";
+// A 10,000-sim MC cannot resolve below ~1 in 10,000, and pc() prints anything under 0.0005 as
+// a flat "0.0%" that reads as *impossible*. Everything past the resolution of the simulation is
+// printed as a bound instead, in both tails: 0/10,000 is "<0.1%", not "0.0%".
+const pcOdds = p => p < 0.001 ? "&lt;0.1%" : p > 0.999 ? "&gt;99.9%" : pc(p);
+
+let P = null, LINKABLE = new Set(), OPEN = null;
+
+Promise.all([
+  fetch("projection_2026.json").then(r => r.json()),
+  // Only to decide which roster names can be links: build_wnba_site.py publishes a player
+  // page only above its activity floor, so a bench name with no file would 404 the Explorer.
+  fetch("players.json").then(r => r.ok ? r.json() : []).catch(() => [])
+]).then(([proj, players]) => {
+  P = proj;
+  LINKABLE = new Set((players || []).map(p => p.id));
+  document.getElementById("msg").hidden = true;
+  render();
+}).catch(e => {
+  document.getElementById("msg").textContent = "Could not load projection_2026.json: " + e;
+});
+
+function playerCell(r) {
+  const gid = "w" + r.pid;
+  return LINKABLE.has(gid)
+    ? '<a href="index.html?p=' + encodeURIComponent(gid) + '">' + esc(r.name) + "</a>"
+    : esc(r.name);
+}
+
+/* Win-total distribution as a mini bar chart. win_hist[k] = P(exactly k wins), so it indexes
+   directly and its length is games_total+1. Drawn from the team's own played+remaining span
+   rather than a shared axis: a 43-game team (PDX, CON -- one 2026 fixture is missing upstream)
+   would otherwise be silently stretched to 44. */
+function histSVG(hist) {
+  const W = 104, H = 20, n = hist.length;
+  const svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "pj-hist", role: "img",
+    "aria-label": "win-total distribution" });
+  const hi = Math.max.apply(null, hist) || 1;
+  const bw = W / n;
+  for (let k = 0; k < n; k++) {
+    if (hist[k] <= 0) continue;
+    const h = Math.max(0.7, (hist[k] / hi) * (H - 2));
+    svg.appendChild(el("rect", { x: (k * bw).toFixed(2), y: (H - h).toFixed(2),
+      width: Math.max(0.8, bw - 0.35).toFixed(2), height: h.toFixed(2),
+      fill: "var(--accent)", "fill-opacity": 0.72 }));
+  }
+  return svg;
+}
+
+function oddsCell(p, cls) {
+  const td = document.createElement("td");
+  td.className = "pj-odds" + (cls ? " " + cls : "");
+  const bar = document.createElement("i");
+  bar.style.width = (Math.max(0, Math.min(1, p)) * 100).toFixed(1) + "%";
+  const sp = document.createElement("span");
+  sp.innerHTML = pcOdds(p);
+  td.appendChild(bar); td.appendChild(sp);
+  return td;
+}
+
+function render() {
+  const M = P.meta, order = P.standings_order, T = P.teams;
+
+  // Short month-day in the big mono slot: a full ISO date is 10 mono glyphs at 24px and wraps
+  // onto two lines inside a 130px .kpi, which reads as a layout bug. Full date sits below it.
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const shortDay = iso => { const p = String(iso).split("-");
+    return (+p[2]) + " " + (MON[+p[1] - 1] || p[1]); };
+
+  // STALENESS. The board is refreshed in batches, so this page starts drifting the day after
+  // it is built: games in the "remaining" set get played while the projection still counts
+  // them. Derived from the viewer's clock against remaining_first_date rather than stamped at
+  // build time, because the drift grows while the file sits still and a build-time stamp would
+  // report zero forever. Counting DATES, not games, keeps it honest without shipping a schedule.
+  // Declared HERE, above its first use in the subtitle: `const` in a temporal dead zone threw
+  // and took the whole render() with it, leaving the page on its "could not load" message.
+  const dayMs = 864e5;
+  const firstRem = Date.parse(M.schedule.remaining_first_date + "T00:00:00Z");
+  const staleDays = Math.floor((Date.now() - firstRem) / dayMs) + 1;
+  const stale = staleDays > 0;
+
+  document.getElementById("sub").innerHTML =
+    "A Monte-Carlo of the <b>" + M.schedule.games_remaining + "</b> remaining regular-season games "
+    + "and the playoffs, run <b>" + M.n_sims.toLocaleString() + "</b> times from the board as of "
+    + esc(M.as_of) + ". Every number here is simulated; none of it has happened."
+    + (stale
+       ? ' <span class="stalewarn">This projection is ' + staleDays + " day"
+         + (staleDays === 1 ? "" : "s") + " behind: games from "
+         + shortDay(M.schedule.remaining_first_date)
+         + " onward are still counted as unplayed. Re-run it against a fresher board.</span>"
+       : "");
+
+  const gm = M.game_model;
+  const kpi = [
+    ["Favourite", order[0] + " " + pc(T[order[0]].title_prob), "title odds"],
+    ["Board as of", shortDay(M.as_of), esc(M.as_of) + " — corpus end, refreshed in batches"],
+    ["Games left", String(M.schedule.games_remaining),
+      "as of " + shortDay(M.as_of) + " · "
+      + shortDay(M.schedule.remaining_first_date) + " → " + shortDay(M.schedule.remaining_last_date)],
+    ["Simulations", M.n_sims.toLocaleString(), "seed " + M.seed],
+    ["Home edge", sgn(gm.hca, 2), "points, measured on this board"],
+    ["Game σ", gm.sigma_game.toFixed(2), "points; team error split out"]
+  ];
+  document.getElementById("kpis").innerHTML = kpi.map(k =>
+    '<div class="kpi"><div class="k">' + esc(k[0]) + '</div><div class="v">' + k[1]
+    + '</div><div class="x">' + k[2] + "</div></div>").join("");
+
+  const fc = document.getElementById("fmtCallout");
+  fc.hidden = false;
+  fc.innerHTML = "<strong>The bracket is an assumption.</strong> The four odds columns below are "
+    + "conditional on an " + M.playoff_format.field_size + "-team field out of "
+    + M.playoff_format.n_teams_in_league + " teams, which is what 2025 used — but 2026 is an "
+    + "expansion year and the league has not published a 2026 bracket in this data. The format "
+    + "itself is <em>verified</em> against 2025: of all 40,320 possible seedings, "
+    + M.playoff_format.verified_against_2025.n_seedings_reproducing_2025_exactly
+    + " reproduce the 2025 playoffs game for game, and they imply champion "
+    + esc(M.playoff_format.verified_against_2025.champion_2025_implied)
+    + ", which is correct. Seeding here breaks ties on point differential; the league uses "
+    + "head-to-head, which this repo has no feed for.";
+
+  const lc = document.getElementById("lvlCallout");
+  lc.hidden = false;
+  lc.innerHTML = "<strong>Strength is not centred on zero.</strong> A team's strength is the "
+    + "minute-weighted sum of its five on-floor board ratings, and the board is a five-season "
+    + "window, so the 2026 league mean is <strong>" + sgn(M.strength_level.league_mean, 2)
+    + "</strong> (sd " + n1(M.strength_level.sd) + "), not 0. A team at 0.0 is "
+    + "<em>below</em> average. Only differences enter the game model, so the level is arbitrary "
+    + "— read the column against " + sgn(M.strength_level.league_mean, 2) + ", not against 0.";
+
+  document.getElementById("tblNote").innerHTML =
+    "Ordered by projected wins. <b>W</b>/<b>L</b> and <b>PD</b> are the record to date, derived "
+    + "from the same play-by-play the board is solved on. The 80% band is the 10th–90th "
+    + "percentile of simulated win totals; the sparkline is the whole distribution. "
+    + "<b>Click a team</b> for its minute allocation and who is carrying the projection.";
+
+  const tb = document.querySelector("#stand tbody");
+  tb.innerHTML = "";
+  order.forEach((tri, i) => {
+    const t = T[tri];
+    const tr = document.createElement("tr");
+    tr.className = "pj-row"; tr.dataset.tri = tri;
+    const cells = [
+      ['<td class="rank">' + (i + 1) + "</td>"],
+      ['<td class="l"><span class="pj-tri">' + esc(tri) + '</span> <span style="color:var(--muted)">'
+        + esc(t.nickname) + "</span></td>"],
+      ["<td>" + t.w + "</td>", "<td>" + t.l + "</td>", "<td>" + t.games_remaining + "</td>",
+        "<td>" + sgn(t.point_diff, 0) + "</td>"],
+      ['<td class="grp">' + sgn(t.strength, 2) + "</td>"],
+      ['<td class="grp net">' + n1(t.proj_wins) + "</td>", "<td>" + n1(t.proj_losses) + "</td>",
+        '<td style="color:var(--muted)">' + t.p10 + "–" + t.p90 + "</td>"]
+    ].flat().join("");
+    tr.innerHTML = cells;
+    const histTd = document.createElement("td");
+    histTd.className = "l";
+    histTd.appendChild(histSVG(t.win_hist));
+    tr.appendChild(histTd);
+    tr.appendChild(oddsCell(t.playoff_prob, "grp"));
+    tr.appendChild(oddsCell(t.semis_prob));
+    tr.appendChild(oddsCell(t.finals_prob));
+    tr.appendChild(oddsCell(t.title_prob));
+    const seed = document.createElement("td");
+    seed.className = "grp";
+    // null = never made the field in any sim (SEA today). An em-dash, never NaN.
+    if (t.avg_seed_if_qualified == null) {
+      seed.innerHTML = '<span style="color:var(--faint)" title="never reached the field in any simulation">—</span>';
+    } else { seed.textContent = t.avg_seed_if_qualified.toFixed(2); }
+    tr.appendChild(seed);
+    tr.addEventListener("click", () => openTeam(tri));
+    tb.appendChild(tr);
+  });
+
+  const sumT = order.reduce((a, k) => a + T[k].title_prob, 0);
+  document.getElementById("tblCap").textContent =
+    "Title odds sum to " + sumT.toFixed(3) + ", playoff odds to "
+    + order.reduce((a, k) => a + T[k].playoff_prob, 0).toFixed(2) + " (the field size) and finals "
+    + "odds to " + order.reduce((a, k) => a + T[k].finals_prob, 0).toFixed(2)
+    + " — an arithmetic check on the simulation, not on the model. ‘Seed’ is the mean "
+    + "seed in the sims where the team qualified, so it is conditional and not comparable across "
+    + "teams with very different playoff odds.";
+
+  const maxT = Math.max.apply(null, order.map(k => T[k].title_prob)) || 1;
+  document.getElementById("titleBars").innerHTML = order.filter(k => T[k].title_prob > 0)
+    .map(k => '<li><span class="nm">' + esc(k) + " " + esc(T[k].nickname) + '</span>'
+      + '<span class="tr"><i style="width:' + (T[k].title_prob / maxT * 100).toFixed(1)
+      + '%"></i></span><span class="vv">' + pc(T[k].title_prob) + "</span></li>").join("");
+  const zero = order.filter(k => T[k].title_prob <= 0);
+  document.getElementById("titleCap").textContent = zero.length
+    ? zero.join(", ") + " won a title in none of the " + M.n_sims.toLocaleString()
+      + " simulations, so they are below the resolution of the simulation — not impossible. "
+      + "Every cell reading “<0.1%” in the table above means the same thing."
+    : "";
+
+  document.getElementById("caveats").innerHTML =
+    (M.caveats || []).map(c => "<li>" + esc(c) + "</li>").join("");
+  document.getElementById("foot").innerHTML =
+    "Board: " + esc(M.board) + ". Game model: " + esc(M.game_model.file)
+    + " (block <code>" + esc(M.game_model.block_used) + "</code>, hca " + n1(gm.hca)
+    + ", a " + gm.a.toFixed(3) + ", σ " + n1(gm.sigma_total) + " split into a per-game "
+    + n1(gm.sigma_game) + " plus a persistent per-team " + n1(gm.team_error_sd_pts)
+    + "). Minutes: mean over each team’s last " + M.minutes.window_games
+    + " games, normalized to " + M.minutes.minutes_per_team_game
+    + " player-minutes per team per game — a WNBA game is 40 minutes × 5 on the floor, "
+    + "not the NBA’s 240. The window is a measured null, not a tuned parameter.";
+
+  openTeam(order[0]);
+}
+
+function openTeam(tri) {
+  const t = P.teams[tri];
+  if (!t) return;
+  OPEN = tri;
+  document.querySelectorAll("tr.pj-row").forEach(r => r.classList.toggle("on", r.dataset.tri === tri));
+
+  const roster = t.roster.slice().sort((a, b) => b.exp_mpg - a.exp_mpg);
+  const rows = roster.map(r =>
+    "<tr><td class=\"l\">" + playerCell(r) + "</td>"
+    + "<td>" + n1(r.exp_mpg) + "</td><td>" + n1(r.season_mpg) + "</td>"
+    + "<td>" + n1(r.mpg_when_available) + "</td>"
+    + "<td>" + r.appearances_in_window + "</td>"
+    + '<td class="grp net">' + sgn(r.net, 2) + "</td>"
+    + '<td class="grp">' + sgn(r.strength_contrib, 2) + "</td>"
+    + "<td>" + sgn(r.wins_contrib_remaining, 2) + "</td>"
+    + "<td>" + sgn(r.wins_per_10mpg, 3) + "</td></tr>").join("");
+
+  const watch = (t.minutes_watchlist || []);
+  const watchHTML = watch.length
+    ? '<div class="scroll"><table class="tbl"><thead><tr><th class="l">Player</th>'
+      + "<th>In window</th><th>When available</th><th>Season</th><th>Apps</th><th>Net</th>"
+      + "<th>Wins / 10 mpg</th></tr></thead><tbody>"
+      + watch.map(w => '<tr><td class="l">' + playerCell(w) + "</td><td>" + n1(w.window_mpg)
+        + "</td><td>" + n1(w.mpg_when_available) + "</td><td>" + n1(w.season_mpg) + "</td><td>"
+        + w.appearances_in_window + "/" + w.window_games + "</td><td>" + sgn(w.net, 2) + "</td><td>"
+        + sgn(w.wins_per_10mpg, 3) + "</td></tr>").join("")
+      + "</tbody></table></div>"
+    : '<p class="pj-note">Nobody on this roster is being under-credited by the recency window.</p>';
+
+  document.getElementById("detail").innerHTML =
+    '<div class="pj-detail">'
+    + "<h3>" + esc(tri) + " " + esc(t.name) + "</h3>"
+    + '<p class="pj-note">' + t.w + "–" + t.l + " through " + t.gp + " of " + t.games_total
+    + " games, " + t.games_remaining + " left. Projected <strong>" + n1(t.proj_wins) + "–"
+    + n1(t.proj_losses) + "</strong> (80% band " + t.p10 + "–" + t.p90 + ", 95% band "
+    + t.p2_5 + "–" + t.p97_5 + "). Strength " + sgn(t.strength, 2)
+    + " against a league mean of " + sgn(P.meta.strength_level.league_mean, 2) + ".</p>"
+
+    + '<div class="pj-sec" style="margin-top:18px">Who is carrying it</div>'
+    + '<p class="pj-note">Expected minutes come from the last ' + P.meta.minutes.window_games
+    + ' games, normalized to ' + P.meta.minutes.minutes_per_team_game
+    + ' per team per game. <b>Strength</b> adds up to the team’s ' + sgn(t.strength, 2)
+    + ' and <b>Wins</b> to the ' + sgn(t.proj_wins - t.w, 2)
+    + ' wins still to come — both exactly, by construction.</p>'
+    + '<div class="scroll"><table class="tbl"><thead><tr><th class="l">Player</th>'
+    + '<th>Exp mpg</th><th>Season</th><th>When avail.</th><th>Apps</th>'
+    + '<th class="grp">Net</th><th class="grp">Strength</th><th>Wins left</th>'
+    + "<th>Wins / 10 mpg</th></tr></thead><tbody>" + rows + "</tbody></table></div>"
+
+    + '<div class="pj-sec" style="margin-top:18px">Minutes watchlist</div>'
+    + '<p class="pj-note">There is <strong>no WNBA injury or availability feed in this repo</strong>, '
+    + "so nobody’s return is modelled. These are the players whose window minutes sit well "
+    + "below what they play on the nights they are available — the projection is not crediting "
+    + "them, and <b>Wins / 10 mpg</b> is the exact derivative if you want to add them back by hand."
+    + "</p>" + watchHTML
+    + "</div>";
+}
+</script>
+</body></html>

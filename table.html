@@ -195,6 +195,7 @@
       <div class="fld"><span class="seglab">Rating</span>
         <div class="seg" id="modeseg">
           <button data-mode="pure" type="button">Pure RAPM</button>
+          <button data-mode="prior" type="button" title="The same daily solve, shrunk toward a WNBA box-score prior instead of toward zero.">Prior-informed</button>
           <button data-mode="box" type="button">Box prior</button>
         </div>
       </div>
@@ -230,7 +231,7 @@ const TIP={
   dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
   dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds.",
   // The column means two different things on the two tables that carry it, so it says both.
-  school:"College board: the most recent school he played for in 2025-26. Draft board: the school he was drafted out of."
+  school:"The player's most recent WNBA franchise in that season."
 };
 
 /* ---- formatting ---------------------------------------------------------- */
@@ -264,6 +265,7 @@ const MODELAB={pure:'Pure RAPM', prior:'Prior-informed', box:'Box prior', latent
 // It is also the basis every other line is described against, so it needs no line of its own here.
 const MODEHINT={
   pure:'The prior-free six-factor solve. The default here.',
+  prior:'The same solve, shrunk toward a WNBA box-score prior instead of toward zero — box-only, because there is no WNBA equivalent of the commercial metric the men\'s version also uses. Better at predicting game margins than Pure, but not centred on zero, and thin-exposure players sit lower on it.',
   box:'A box-score prediction of the same six factors, fit on WNBA box stats only, at its own scale — it reads cooler than the board, especially on defense.'};
 // Rendered only when the exporter STAMPED the equality (build_table_site.py derives it by
 // comparing every emitted cell), so this sentence cannot outlive the fact it describes.
@@ -309,7 +311,7 @@ let MODE=(localStorage.getItem('wrapm_mode_pinned')==='1' && localStorage.getIte
 // build_table_site.py run (deploy_site.sh:356 ships them together, but order is not enforced).
 function modeOK(m){ const tb=curTable(); return !!(tb&&(tb.modes||['prior']).indexOf(m)>=0); }
 function activeMode(){ return modeOK(MODE)?MODE:'prior'; }
-function vals(r,m){ return m==='prior'?r:((r&&r.m&&r.m[m])||{}); }
+function vals(r,m){ return (r&&r.m&&r.m[m])||{}; }   // WNBA: top level is PURE, so EVERY mode reads its own r.m block
 
 function setMode(m){
   if(!modeOK(m))return;                       // button is disabled anyway

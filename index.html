@@ -326,6 +326,7 @@
       <span class="readout" id="readout"></span>
       <div id="modeseg" class="seg" style="margin-left:auto;display:none">
         <button data-mode="pure" type="button">Pure RAPM</button>
+        <button data-mode="prior" type="button" title="The same daily solve, shrunk toward a WNBA box-score prior instead of toward zero.">Prior-informed</button>
         <button data-mode="box" type="button">Box prior</button>
       </div>
     </div>
@@ -529,12 +530,17 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 //            line instead of disjoint per-league graphs; net chart coloured by league played (F4).
 // The box hint's "reads cooler than the board" clause is NOT filler — it is the honest-scale
 // disclosure for a curve drawn on the same axis as the board. Shorten it, never drop it.
-// TWO modes here, not the men's four, and the omissions are deliberate:
-//   prior-informed — that board is a daily-refit box+EPM in-ridge prior. There is no WNBA
-//                    EPM, so the same label over a different estimator would be a lie.
-//   latent         — fuses a player's legs ACROSS leagues. One league => identity function.
+// THREE modes here, not the men's four.
+//   pure   — the default (owner's pick, kept when Prior-informed shipped 2026-07-29).
+//   prior  — the SAME per-atom daily solve, shrunk toward a WNBA BOX-SCORE prior instead of
+//            toward zero. NOT the men's mode: that one is box+EPM and there is no WNBA EPM.
+//            Two things the hint has to say out loud, because both look like bugs otherwise —
+//            the board is no longer mean-zero, and thin-exposure players move DOWN on it.
+//   box    — the prior itself, at its own scale.
+//   latent — ABSENT. It fuses a player's legs ACROSS leagues; one league => identity.
 const MODEHINT={
   pure:'Pure RAPM — what the lineup data says on its own, with no prior. The default here. Noisiest, and the cleanest read on the raw signal.',
+  prior:'Prior-informed RAPM — the same solve, shrunk toward a WNBA box-score prior instead of toward zero, hardest where lineup data is thin. Box-only: there is no WNBA equivalent of the commercial metric the men\'s version also uses. It predicts game margins better than Pure, but it is not centred on zero and a thin-exposure player the box sheet dislikes can sit ~2 points lower here.',
   box:'Box prior — a box-score prediction of the same six factors, fit on WNBA box stats only. Shown at its own honest scale, so it reads cooler than the board, especially on defense.'};
 const MODEHINT_LATENT_ALIAS='';
 // DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). DORMANT since 2026-07-21:
@@ -571,9 +577,12 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
   const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
   Promise.all([
     fetch('data/'+id+'.json').then(r=>r.json()),     // PURE board (base here; carries name)
+    opt('data/'+id+'_prior.json'),                   // prior-informed (in-ridge WNBA box prior)
     opt('data/'+id+'_box.json')                      // box prior
-  ]).then(([pure,box])=>{
-    const prior=pure, latent=null, atoms=null, atomsp=null;   // no such boards in the WNBA
+  ]).then(([pure,priorS,box])=>{
+    // `prior` is the BASE file here, i.e. pure: it is the one that carries .name and the one
+    // priorPrep below is built from. The prior-informed SERIES entry comes from priorS.
+    const prior=pure, latent=null, atoms=null, atomsp=null;   // no latent/atom boards here
     PNAME=prior.name||name;
     const priorPrep=prep(prior);
     // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
@@ -586,7 +595,7 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
     // guaranteed even when the lengths happen to match. Date is the only safe join.
     ATOMSRC={pure:indexAtoms(atoms), prior:indexAtoms(atomsp)}; ATOMS=null; ATOMOPEN=null;
     BOX_SM=(box&&box.sm)||0;                        // per-player: what was actually applied (F3)
-    SERIES={pure:priorPrep, box:box?prep(box):null};
+    SERIES={pure:priorPrep, prior:priorS?prep(priorS):null, box:box?prep(box):null};
     RAW={prior, pure, box, latent};
     show();
   });}
@@ -1219,7 +1228,7 @@ function show(){
   applyAtomLayout();   // a fresh grid is always collapsed; clear any class left by the last player
   Object.keys(ATOMK).forEach(f=>{const b=document.getElementById('dr_'+f);
     if(b)b.addEventListener('click',()=>toggleAtoms(f));});
-  document.getElementById('projseg').style.display='inline-flex';
+  // projseg deliberately NOT revealed -- no WNBA player-trajectory projection exists.
   document.getElementById('odseg').style.display='inline-flex';
   syncProjSeg(); syncOdSeg();
   syncSeg();
