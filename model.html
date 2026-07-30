@@ -176,16 +176,19 @@
       <li><strong>Team strength</strong> is the minute-weighted sum of the five on-floor board
       ratings, with minutes taken from each team's last 10 games and normalized to 200
       player-minutes per team per game &mdash; a WNBA game is 40 minutes with five on the floor,
-      not the NBA's 240.</li>
+      not the NBA's 240. The published column is <strong>centred on the fifteen-team mean</strong>,
+      so 0.0 is an average 2026 team; the board's own level (+4.91) is subtracted. Only
+      <em>differences</em> reach the game model, so that shift changes nothing &mdash; rerun at the
+      same seed, every projected win and every title chance comes back bit-identical.</li>
       <li><strong>The game model</strong> is fit on this board and borrows nothing from the men's:
       home advantage <strong>+1.83</strong> points, a strength-to-margin slope of
-      <strong>1.144</strong>, and a residual sd of <strong>12.60</strong>. The slope above 1 is
+      <strong>1.071</strong>, and a residual sd of <strong>12.52</strong>. The slope above 1 is
       expected &mdash; a shrunk board under-disperses against realised margins.</li>
-      <li><strong>The variance is split, not stacked.</strong> That 12.60 already contains the
+      <li><strong>The variance is split, not stacked.</strong> That 12.52 already contains the
       board's own error about each team, so simulating a season with all of it as per-game noise
       would make win totals too narrow. The persistent per-team piece is measured off weekly
-      forward cuts (52 team-seasons) at <strong>1.33 points</strong> and taken out, leaving
-      <strong>12.46</strong> per game. Single-game spread is preserved; season spread is not
+      forward cuts (52 team-seasons) at <strong>1.40 points</strong> and taken out, leaving
+      <strong>12.37</strong> per game. Single-game spread is preserved; season spread is not
       understated.</li>
       <li><strong>The bracket is assumed</strong>: an eight-team field out of fifteen, seeded
       league-wide, best-of-3 / 5 / 7. The <em>format</em> is verified &mdash; of all 40,320
@@ -193,22 +196,28 @@
       three imply the correct champion &mdash; but that 2026 keeps an eight-team field in an
       expansion year is an assumption, and the page says so above the table.</li>
     </ul>
-    <p>As of 22 July: <strong>Minnesota 33.0 projected wins and a 37% title chance</strong>, Las
-    Vegas 30.6 and 27%, Dallas 29.3 and 11%.</p>
+    <!-- Quoted to one decimal, matching the Rest of 2026 page exactly. Two pages rounding the
+         same simulation differently ("38%" here against "37.6%" there) reads as two numbers. -->
+    <p>As of 22 July: <strong>Minnesota 33.1 projected wins and a 37.6% title chance</strong>, Las
+    Vegas 30.6 and 25.2%, Dallas 29.5 and 13.3%.</p>
     <div class="callout"><strong>Three caveats, in order of how much they matter.</strong>
     <br>(1) <strong>There is no injury or availability feed anywhere in this project.</strong> A
     player who has missed their team's last ten games enters at nearly zero expected minutes even
     if they are about to return. The loudest live case is Minnesota's Napheesa Collier, who has played
     exactly one 2026 game. Rather than guess, the page publishes the exact derivative &mdash; what
     ten more minutes per game is worth in wins &mdash; for every player the window is
-    under-crediting. For Collier a full restoration is about 0.56 wins.
+    under-crediting. For Collier that derivative is <strong>0.32 wins per ten minutes</strong>, so
+    restoring her whole 20-minute gap is about 0.64 wins.
     <br>(2) <strong>Team strength is frozen at 22 July</strong> and does not drift, age or respond
     to a trade over the remaining eight weeks.
-    <br>(3) <strong>The projection runs on the Pure board</strong>, with a game model fit on the
-    Pure board. Prior-informed predicts margins slightly better, so it would be the better basis
-    &mdash; but it needs its own re-fit slope (a less-shrunk board wants a smaller one), and reusing
-    the Pure slope on it would widen every band by about 7%. Doing it properly is a re-fit, not a
-    switch, and it has not been done yet.</div>
+    <br>(3) <strong>The projection runs on the Prior-informed board</strong>, with a game model
+    <em>re-fit on that same board</em> &mdash; a less-shrunk board wants a smaller slope, and it got
+    one (1.144 &rarr; 1.071). Reusing the Pure slope instead would have widened every band by about
+    6%, so the two are now chosen from one key and the builder refuses to run a mismatched pair.
+    The gain is real but small, and it is not consistent: the Prior-informed board wins only
+    <strong>24 of the 42</strong> walk-forward blocks. Running the whole projection on Pure instead
+    moves no team's wins by more than <strong>0.4</strong> and changes neither the order nor the
+    favourite.</div>
 
     <h2 id="data">The data</h2>
     <p>2022&ndash;2026 regular season plus 2022&ndash;2025 playoffs: <strong>1,263 games,

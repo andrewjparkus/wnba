@@ -119,24 +119,23 @@
    * Lazy-loads players.json on first open, fuzzy-filters players + the 30 NBA
    * franchises, and navigates to the Explorer (index.html?p=id) or a team page
    * (team.html?abbr=ABBR). One shared widget so every page gets it for free. */
+  // The FIFTEEN 2026 WNBA franchises. PHO is deliberately absent: the board carries PHO for
+  // 2022-24 and PHX for 2025-26, team_colors_wnba.js folds one into the other, and a palette
+  // offering both would present one club twice.
   var TEAMS = {
-    ATL: "Atlanta Hawks", BOS: "Boston Celtics", BKN: "Brooklyn Nets", CHA: "Charlotte Hornets",
-    CHI: "Chicago Bulls", CLE: "Cleveland Cavaliers", DAL: "Dallas Mavericks", DEN: "Denver Nuggets",
-    DET: "Detroit Pistons", GSW: "Golden State Warriors", HOU: "Houston Rockets", IND: "Indiana Pacers",
-    LAC: "LA Clippers", LAL: "Los Angeles Lakers", MEM: "Memphis Grizzlies", MIA: "Miami Heat",
-    MIL: "Milwaukee Bucks", MIN: "Minnesota Timberwolves", NOP: "New Orleans Pelicans", NYK: "New York Knicks",
-    OKC: "Oklahoma City Thunder", ORL: "Orlando Magic", PHI: "Philadelphia 76ers", PHX: "Phoenix Suns",
-    POR: "Portland Trail Blazers", SAC: "Sacramento Kings", SAS: "San Antonio Spurs", TOR: "Toronto Raptors",
-    UTA: "Utah Jazz", WAS: "Washington Wizards"
+    ATL: "Atlanta Dream", CHI: "Chicago Sky", CON: "Connecticut Sun", DAL: "Dallas Wings",
+    GSV: "Golden State Valkyries", IND: "Indiana Fever", LAS: "Los Angeles Sparks",
+    LVA: "Las Vegas Aces", MIN: "Minnesota Lynx", NYL: "New York Liberty", PDX: "Portland Fire",
+    PHX: "Phoenix Mercury", SEA: "Seattle Storm", TOR: "Toronto Tempo",
+    WAS: "Washington Mystics"
   };
   var PLAYERS = null, LOADING = false, ACT = 0, RESULTS = [], BG = null, IN = null, LIST = null;
 
   // primary league of a multi-league lg string (e.g. "cgn" -> nba). NBA > G-League > college.
   function leaguePill(lg) {
-    lg = String(lg || "");
-    if (lg.indexOf("n") >= 0) return ['b-n', 'NBA'];
-    if (lg.indexOf("g") >= 0) return ['b-g', 'GL'];
-    return ['b-c', 'NCAA'];
+    // one league, one token ('w'). The men's three-way test read 'w' as none-of-the-above and
+    // pilled every WNBA player as NCAA.
+    return ['b-w', 'WNBA'];
   }
   function norm(s) { return String(s).toLowerCase().replace(/[^a-z0-9 ]/g, ""); }
 
@@ -215,7 +214,7 @@
       if (r.kind === "loading") { h += '<div class="opt' + on + '"><span class="nm">Loading players…</span></div>'; return; }
       if (r.kind === "team") {
         h += '<div class="opt' + on + '" data-i="' + i + '"><span class="nm">' + esc(r.name) +
-          '</span><span class="meta"><span class="badge b-n">' + esc(r.abbr) + '</span> team</span></div>';
+          '</span><span class="meta"><span class="badge b-w">' + esc(r.abbr) + '</span> team</span></div>';
       } else {
         var pill = leaguePill(r.p.lg);
         h += '<div class="opt' + on + '" data-i="' + i + '"><span class="nm">' + esc(r.p.n) +

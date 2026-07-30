@@ -4,12 +4,12 @@
  * shape as charts.js/nav.js: an IIFE that hangs its API on `window` and also
  * CommonJS-exports so `node team_colors.js` can assert its own invariants.
  *
- * SOURCE. Every hex below is nbacolors.com's own data — the per-team pages are
- * JS-rendered from https://nbacolors.com/js/data.json, which is what this table
- * transcribes (colors[0] -> primary, colors[1] -> secondary). Spot-checked
- * against the rendered pages: Chicago #ce1141/#000000, San Antonio
- * #c4ced4/#000000. NO team is filled in from general knowledge; if one ever is,
- * mark it right here with an UNSOURCED comment on its line.
+ * SOURCE. The twelve franchises teamcolorcodes.com/wnba-color-codes/ carries are
+ * transcribed from its per-team pages; the three it has no entry for (GSV, PDX, TOR)
+ * are MEASURED off ESPN's own team mark. Which hex becomes the primary is decided by
+ * pixel dominance in that mark, not by the source's swatch order. The per-line comments
+ * in TEAM_COLORS carry the label, the order and the measurement for every team; the
+ * generator is research/wnba/fork_site_html.py and this file is GENERATED -- edit that.
  *
  * WHY DERIVE INSTEAD OF USING THE BRAND HEX. These are colours picked for a
  * white jersey and a white broadcast graphic. On this site's #080b11 page the
@@ -34,22 +34,59 @@
    * PHO, LAC named "LA Clippers"): read off projection_2026_27_teams.json, not
    * guessed. Names match the feed so a caller can label from either source. */
   var TEAM_COLORS = {
+    // tcc "Red" + "Blue", its order 1,2. Mark: red 12.2% is its only real hue (43% is the
+    // greyscale ball, 2.5% blue). Shares #C8102E with IND -- see the collision note.
     ATL: { name: "Atlanta Dream",             primary: "#C8102E", secondary: "#418FDE" },
-    CHI: { name: "Chicago Sky",               primary: "#418FDE", secondary: "#FDD023" },
-    CON: { name: "Connecticut Sun",           primary: "#F05023", secondary: "#0A2240" },
+    // tcc "Blue" + "Yellow", order REVERSED: the mark is 38.3% #418FDE against 30.8% yellow,
+    // and the franchise is called the Sky. tcc lists Yellow (#FFCD00) first.
+    CHI: { name: "Chicago Sky",               primary: "#418FDE", secondary: "#FFCD00" },
+    // tcc "Orange" + "Blue". tcc lists "Red #a6192e" FIRST and that colour is ABSENT from the
+    // mark (0 of 91,215 opaque px); the mark is 33.6% #F85828-family orange over 16.8% navy,
+    // so the orange is the hue. Was #F05023/#0A2240 -- neither is on the source page.
+    CON: { name: "Connecticut Sun",           primary: "#DC4405", secondary: "#041E42" },
+    // tcc "Navy" + "Green", order 1,2. Mark: navy 55.3%; cyan 12.8% vs green 12.6% is a tie in
+    // the raster, broken by tcc's order (Green is listed before Cyan).
     DAL: { name: "Dallas Wings",              primary: "#0C2340", secondary: "#C4D600" },
-    GSV: { name: "Golden State Valkyries",    primary: "#5A2D81", secondary: "#000000" },
-    IND: { name: "Indiana Fever",             primary: "#E03A3E", secondary: "#041E42" },
-    LAS: { name: "Los Angeles Sparks",        primary: "#552583", secondary: "#FDB927" },
-    LVA: { name: "Las Vegas Aces",            primary: "#A7A8AA", secondary: "#000000" },
-    MIN: { name: "Minnesota Lynx",            primary: "#266092", secondary: "#79BC43" },
-    NYL: { name: "New York Liberty",          primary: "#86CEBC", secondary: "#000000" },
-    PDX: { name: "Portland Fire",             primary: "#E03A3E", secondary: "#000000" },
-    PHO: { name: "Phoenix Mercury",           primary: "#E56020", secondary: "#201747" },
-    PHX: { name: "Phoenix Mercury",           primary: "#E56020", secondary: "#201747" },
-    SEA: { name: "Seattle Storm",             primary: "#2C5234", secondary: "#FEE11A" },
-    TOR: { name: "Toronto Tempo",             primary: "#B4292F", secondary: "#000000" },
-    WAS: { name: "Washington Mystics",        primary: "#002B5C", secondary: "#E03A3E" }
+    // UNSOURCED-BY-TCC. Measured: the ESPN mark is 62.2% #000000 and 19.3% a single flat
+    // #B896D4 violet (987 distinct colours, the rest anti-aliasing). Black cannot be the
+    // primary -- baseFor() would skip it -- so the violet is. Was #5A2D81, the KINGS' purple.
+    GSV: { name: "Golden State Valkyries",    primary: "#B896D4", secondary: "#000000" },
+    // tcc "Red" + "Blue", order 1,2. Mark: navy 37.1% vs red 33.7%, a 3.4-point gap, so
+    // dominance is a near-tie and the source order takes it. Was #E03A3E (the NBA Hawks' red).
+    IND: { name: "Indiana Fever",             primary: "#C8102E", secondary: "#041E42" },
+    // tcc "Purple" + "Yellow", order REVERSED: mark is 50.2% purple vs 34.2% yellow. Was
+    // #552583/#FDB927 -- the LAKERS' hexes, not the Sparks'.
+    LAS: { name: "Los Angeles Sparks",        primary: "#702F8A", secondary: "#FFC72C" },
+    // tcc "Red" + "Black", order 1,2. The mark is 100% GREYSCALE (black 57.6%, white 20.9%,
+    // silver 12.2%, zero chromatic pixels), so dominance cannot choose and red is the only hue
+    // the franchise has. Was #A7A8AA primary, i.e. a silver that baseFor() would have thrown
+    // away for the black secondary and then for the site accent.
+    LVA: { name: "Las Vegas Aces",            primary: "#BA0C2F", secondary: "#000000" },
+    // tcc "Navy" + "Blue", order 1,2 and dominance 1,2 (36.3% / 21.2%; the green is 0.7%).
+    // Shares #0C2340 with DAL and WAS. Was #266092/#79BC43, neither on the source page.
+    MIN: { name: "Minnesota Lynx",            primary: "#0C2340", secondary: "#236192" },
+    // tcc "Green" + "Black", order 1,2. Mark: black 50.5% (greyscale) over 32.9% seafoam, so
+    // the seafoam is the hue. Was #86CEBC, a lighter seafoam than the source's #6ECEB2.
+    NYL: { name: "New York Liberty",          primary: "#6ECEB2", secondary: "#000000" },
+    // UNSOURCED-BY-TCC. Measured: the ESPN mark is ONE flat colour, #ED2891, over 100% of its
+    // 52,927 fully-opaque pixels (1 distinct value). No second colour exists in it, so the
+    // secondary is black by convention and is never reached (the primary is chromatic).
+    // Was #E03A3E, the Hawks' red again.
+    PDX: { name: "Portland Fire",             primary: "#ED2891", secondary: "#000000" },
+    // tcc "Purple" + "Orange", order 1,2. Mark: orange 25.0% vs purple 24.7% -- a dead heat
+    // (0.3 points), so the source order decides and the franchise keeps the purple it is known
+    // for. Both keys carry identical values BY CONSTRUCTION; the self-check asserts it.
+    PHO: { name: "Phoenix Mercury",           primary: "#201747", secondary: "#CB6015" },
+    PHX: { name: "Phoenix Mercury",           primary: "#201747", secondary: "#CB6015" },
+    // tcc "Green" + "Yellow", order REVERSED: the mark is 73.5% green, the most one-sided in
+    // the league, against 14.0% yellow. Yellow corrected #FEE11A -> the source's #FBE122.
+    SEA: { name: "Seattle Storm",             primary: "#2C5234", secondary: "#FBE122" },
+    // UNSOURCED-BY-TCC. Measured: ONE flat #441D36 plum over 100% of 48,459 fully-opaque px.
+    // Same single-colour wordmark situation as PDX. Was #B4292F, invented.
+    TOR: { name: "Toronto Tempo",             primary: "#441D36", secondary: "#000000" },
+    // tcc "Blue" + "Red", order 1,2 and dominance 1,2 (44.2% / 28.8%). Was #002B5C/#E03A3E --
+    // the WIZARDS' hexes. Shares #0C2340 with DAL and MIN.
+    WAS: { name: "Washington Mystics",        primary: "#0C2340", secondary: "#C8102E" }
   };;
 
   /* ---- surfaces & floors ------------------------------------------------ *
@@ -512,43 +549,252 @@
   function teamInkIsBrand(abbr, theme) { return derive(abbr, resolveTheme(theme), "ink").brand; }
   function teamAccentIsBrand(abbr, theme) { return derive(abbr, resolveTheme(theme), "accent").brand; }
 
+
+  /* ---- ESPN team marks -------------------------------------------------- *
+   * Slug map VERIFIED 2026-07-29: all sixteen tricodes fetched 200 with a real PNG body
+   * (10.9-67.9 KB). Two traps, both measured rather than assumed:
+   *   PDX -> 'por'. The obvious 'pdx' 404s.
+   *   PHO and PHX -> 'phx'. Phoenix is recoded mid-corpus and both codes are live in the
+   *   board, so both must resolve; they are the same franchise and the same mark.
+   * Everything else is the lower-cased tricode except the four ESPN shortens (GSV/LAS/LVA/NYL).
+   * check_wnba_identity.py re-fetches all sixteen, so a URL that rots fails a script rather
+   * than showing a reader a broken-image glyph. */
+  var LOGO_SLUG = { ATL: "atl", CHI: "chi", CON: "con", DAL: "dal", GSV: "gs", IND: "ind",
+    LAS: "la", LVA: "lv", MIN: "min", NYL: "ny", PDX: "por", PHO: "phx", PHX: "phx",
+    SEA: "sea", TOR: "tor", WAS: "was" };
+  // The fifteen FRANCHISES (PHO is an alias of PHX, not a sixteenth club). Alphabetical, which
+  // is not a ranking -- a page that wants standings order gets it from its own feed.
+  var TRICODES = ["ATL", "CHI", "CON", "DAL", "GSV", "IND", "LAS", "LVA", "MIN", "NYL",
+    "PDX", "PHX", "SEA", "TOR", "WAS"];
+  var ALIASES = { PHO: "PHX" };
+
+  function canonTri(tri) {
+    var k = String(tri || "").toUpperCase();
+    return ALIASES[k] || k;
+  }
+  function logoURL(tri) {
+    var k = String(tri || "").toUpperCase();
+    return "https://a.espncdn.com/i/teamlogos/wnba/500/" + (LOGO_SLUG[k] || k.toLowerCase()) + ".png";
+  }
+  // ONE spelling of the <img>, because the failure mode is the thing worth sharing: these are
+  // third-party rasters and a 404 must degrade to NOTHING, not to a broken-image glyph. Same
+  // pattern as the men's team page: onerror hides the element and then clears itself so a
+  // second failure cannot loop. `plate` asks for the near-white .wt-plate treatment -- most WNBA
+  // marks are dark-on-transparent (GSV 62% black, LVA 58%, NYL 51%) and would be a smudge on
+  // the dark theme without it.
+  //
+  // EAGER BY DEFAULT, opt into lazy. The men's .pc-badge is loading="lazy" because it rides a
+  // long scrolling result list; a WNBA team hero and a 15-item switcher rail are both ABOVE THE
+  // FOLD, where lazy buys nothing and can cost everything -- measured: in an embedded webview
+  // that never reports the element as near-viewport, all 33 lazy marks on the component
+  // reference stayed at complete=false, naturalWidth=0 forever, and because the load never
+  // FAILED, onerror never fired either, so the plates rendered as blank white discs with no
+  // error anywhere. Removing the attribute loaded them at 500px immediately. Pass {lazy:true}
+  // for a genuinely long list.
+  function logoIMG(tri, size, opts) {
+    opts = opts || {};
+    var cls = ["wt-logo"];
+    if (opts.plate !== false) cls.push("wt-plate");
+    if (opts.cls) cls.push(opts.cls);
+    var t = TEAM_COLORS[canonTri(tri)];
+    var alt = opts.alt === undefined ? (t ? t.name : String(tri || "")) : opts.alt;
+    return '<img class="' + cls.join(" ") + '" src="' + logoURL(tri) + '" alt="' +
+      String(alt).replace(/[&<>"]/g, "") + '" width="' + size + '" height="' + size +
+      '" decoding="async"' + (opts.lazy ? ' loading="lazy"' : "") +
+      ' onerror="this.onerror=null;this.style.visibility=\'hidden\'">';
+  }
+  function teamName(tri) {
+    var t = TEAM_COLORS[canonTri(tri)];
+    return t ? t.name : String(tri || "");
+  }
+  // The SECOND channel. Two brand-hex collisions (ATL/IND red, DAL/MIN/WAS navy) mean the
+  // accent alone cannot tell five of the fifteen franchises apart; the pair can, and the
+  // self-check proves all fifteen pairs are distinct on both themes. Derived through deriveHex
+  // so the secondary clears the same 3:1 mark floor the accent does -- and so the five clubs
+  // whose secondary is #000000 fall back to their own primary rather than to a black nobody can
+  // see, which is why teamAlt() == teamAccent() for GSV/LVA/NYL/PDX/TOR.
+  function teamAlt(tri, theme) {
+    var k = canonTri(tri), t = TEAM_COLORS[k];
+    if (!t) return teamAccent(k, theme);
+    return deriveHex(t.secondary, t.primary, theme, "accent").hex;
+  }
+
+  /* ---- page theming ----------------------------------------------------- *
+   * Ported from team2027.html's applyTeamColor(): the --team-* custom properties, every alpha
+   * SOLVED against the surface it is actually painted on rather than picked. See site.css's
+   * .wt-* block for what reads each one. */
+  function toRGB(c) {
+    var m = String(c || "").trim().match(/^#([0-9a-f]{6})$/i);
+    if (m) return [0, 2, 4].map(function (i) { return parseInt(m[1].slice(i, i + 2), 16); });
+    m = String(c || "").match(/rgba?\(([^)]+)\)/i);
+    if (m) { var p = m[1].split(","); return [+p[0] || 0, +p[1] || 0, +p[2] || 0]; }
+    return null;
+  }
+  function relLumRGB(p) { return 0.2126 * toLin(p[0]) + 0.7152 * toLin(p[1]) + 0.0722 * toLin(p[2]); }
+  function contrastRGB(a, b) {
+    var x = relLumRGB(a), y = relLumRGB(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  }
+  function over(fg, alpha, bg) {
+    return [0, 1, 2].map(function (i) { return Math.round(fg[i] * alpha + bg[i] * (1 - alpha)); });
+  }
+  function hexOfRGB(p) {
+    return "#" + p.map(function (v) { return hex2(v); }).join("");
+  }
+  // Smallest alpha whose COMPOSITED pixel clears `floor` on its backing. Walked over k/255, not
+  // bisected: the compositor quantises alpha to 8 bits, so a bisected 0.794 ships as 202/255 and
+  // lands under the floor it was solved for.
+  function solveAlpha(fg, bg, floor) {
+    for (var k = 1; k <= 255; k++) {
+      if (contrastRGB(over(fg, k / 255, bg), bg) >= floor) return k / 255;
+    }
+    return 1;
+  }
+  // PURE white/black for text sitting ON the accent fill. An accent at the luminance crossover
+  // measures 4.24:1 against the site's near-white and near-black both; #fff/#000 reach 4.58.
+  function onFill(rgb) {
+    return contrastRGB([255, 255, 255], rgb) >= contrastRGB([0, 0, 0], rgb) ? "#ffffff" : "#000000";
+  }
+  // Largest alpha (<= cap) whose composite stays inside the luminance range the inks above were
+  // certified against -- never lighter than --grid on dark, never darker than --panel-3 on
+  // light -- so a tinted panel is provably no worse a ground for text than --panel-3 already is.
+  function boundedWash(fg, bg, limitRGB, light, cap) {
+    var L = relLumRGB(limitRGB), best = 0;
+    for (var k = 1; k <= Math.round(cap * 255); k++) {
+      var l = relLumRGB(over(fg, k / 255, bg));
+      if (light ? l >= L : l <= L) best = k / 255; else break;
+    }
+    return best;
+  }
+  function cssRGB(root, name, fallback) {
+    return toRGB((getComputedStyle(root).getPropertyValue(name) || "").trim()) || fallback;
+  }
+  // Call on load AND on every theme flip -- every value below is solved against the current
+  // theme's surfaces, so a stale set is a contrast guarantee that no longer holds. Returns the
+  // two brand hexes plus whether they ARE the franchise's, so a page can drop the tint for a
+  // team wearing the site accent instead of implying a colour it does not have.
+  function applyTeamTheme(tri, rootEl) {
+    var root = rootEl || (typeof document !== "undefined" ? document.documentElement : null);
+    if (!root) return null;
+    var k = canonTri(tri);
+    var theme = resolveTheme();
+    var site = (getComputedStyle(root).getPropertyValue("--accent") || SITE_ACCENT[theme]).trim();
+    var accent = site, ink = site, alt = site, brand = false;
+    try {
+      accent = teamAccent(k, theme) || site;
+      ink = teamInk(k, theme) || site;
+      alt = teamAlt(k, theme) || accent;
+      brand = teamAccentIsBrand(k, theme);
+    } catch (e) { accent = site; ink = site; alt = site; brand = false; }
+    var rgb = toRGB(accent) || toRGB(site) || [86, 182, 255];
+    var A = function (a) { return "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + a + ")"; };
+    var light = theme === "light";
+    root.style.setProperty("--team", accent);
+    root.style.setProperty("--team-ink", ink);
+    root.style.setProperty("--team-2", alt);
+    root.style.setProperty("--team-on", onFill(rgb));
+    var rail = cssRGB(root, "--panel-2", light ? [238, 243, 249] : [12, 18, 27]);
+    var panel = cssRGB(root, "--panel", light ? [255, 255, 255] : [14, 20, 29]);
+    root.style.setProperty("--team-wash", A(solveAlpha(rgb, rail, 3)));
+    root.style.setProperty("--neg-on", onFill(cssRGB(root, "--neg", light ? [199, 43, 44] : [255, 107, 107])));
+    var limit = cssRGB(root, light ? "--panel-3" : "--grid", light ? [227, 235, 245] : [22, 31, 44]);
+    var tint = over(rgb, boundedWash(rgb, panel, limit, light, 0.05), panel);
+    root.style.setProperty("--team-hover", hexOfRGB(over(rgb, boundedWash(rgb, panel, limit, light, 0.14), panel)));
+    root.style.setProperty("--team-tint", hexOfRGB(tint));
+    root.style.setProperty("--team-line", A(solveAlpha(rgb, tint, 3)));
+    root.style.setProperty("--team-soft", A(0.34));
+    return { tri: k, accent: accent, ink: ink, alt: alt, brand: brand, theme: theme };
+  }
+
   var API = { TEAM_COLORS: TEAM_COLORS, teamAccent: teamAccent, teamInk: teamInk,
     teamInkIsBrand: teamInkIsBrand, teamAccentIsBrand: teamAccentIsBrand,
-    deriveHex: deriveHex, toOklch: toOklch, contrast: contrast, baseFor: baseFor };
+    deriveHex: deriveHex, toOklch: toOklch, contrast: contrast, baseFor: baseFor,
+    teamAlt: teamAlt, wnbaLogoURL: logoURL, wnbaLogoIMG: logoIMG, wnbaTeamName: teamName,
+    wnbaCanonTri: canonTri, WNBA_TRICODES: TRICODES, WNBA_LOGO_SLUG: LOGO_SLUG,
+    applyTeamTheme: applyTeamTheme, teamOnFill: onFill };
   if (typeof window !== "undefined") {
     window.TEAM_COLORS = TEAM_COLORS;
     window.teamAccent = teamAccent;
     window.teamInk = teamInk;
+    window.teamAlt = teamAlt;
     window.teamInkIsBrand = teamInkIsBrand;
     window.teamAccentIsBrand = teamAccentIsBrand;
     window.deriveHex = deriveHex;
+    window.wnbaLogoURL = logoURL;
+    window.wnbaLogoIMG = logoIMG;
+    window.wnbaTeamName = teamName;
+    window.wnbaCanonTri = canonTri;
+    window.WNBA_TRICODES = TRICODES;
+    window.applyTeamTheme = applyTeamTheme;
+    window.teamOnFill = onFill;
   }
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 
-  // node self-check: the invariants the page is allowed to assume
-  // (run `node team_colors.js`).
+  // node self-check: the invariants the WNBA pages are allowed to assume
+  // (run `node team_colors_wnba.js` from site_wnba/, or check_wnba_identity.py which also
+  // re-fetches the sixteen logo URLs -- the one thing node cannot check offline).
   if (typeof require !== "undefined" && typeof module !== "undefined" && require.main === module) {
-    var a = function (c, m) { if (!c) throw new Error("team_colors self-check FAILED: " + m); };
-    var FEED = ["ATL", "BOS", "BKN", "CHA", "CHI", "CLE", "DAL", "DEN", "DET", "GSW",
-      "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK",
-      "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS", "TOR", "UTA", "WAS"];
+    var a = function (c, m) { if (!c) throw new Error("team_colors_wnba self-check FAILED: " + m); };
+    // Every tricode the BOARD carries, which is sixteen keys for fifteen franchises: Phoenix is
+    // PHO in 2022-24 and PHX in 2025-26 and both are live, so both must resolve.
+    var FEED = ["ATL", "CHI", "CON", "DAL", "GSV", "IND", "LAS", "LVA", "MIN", "NYL",
+      "PDX", "PHO", "PHX", "SEA", "TOR", "WAS"];
     var keys = Object.keys(TEAM_COLORS);
-    a(keys.length === 30, "expected 30 teams, got " + keys.length);
+    a(keys.length === 16, "expected 16 keys (15 franchises + the PHO alias), got " + keys.length);
     FEED.forEach(function (k) { a(TEAM_COLORS[k], "missing feed key " + k); });
     keys.forEach(function (k) { a(FEED.indexOf(k) >= 0, "key not in feed: " + k); });
-    // source spot-checks (guard against a well-meaning edit drifting off-source)
-    a(TEAM_COLORS.CHI.primary === "#CE1141" && TEAM_COLORS.CHI.secondary === "#000000", "CHI off-source");
-    a(TEAM_COLORS.SAS.primary === "#C4CED4", "SAS off-source");
+    a(TRICODES.length === 15 && TRICODES.indexOf("PHO") < 0,
+      "TRICODES should be the 15 FRANCHISES with PHO folded into PHX");
+    // Phoenix, both ways round: same franchise, same mark, so the same colours -- and canonTri
+    // has to agree, because that is what a page groups by.
+    a(TEAM_COLORS.PHO.primary === TEAM_COLORS.PHX.primary &&
+      TEAM_COLORS.PHO.secondary === TEAM_COLORS.PHX.secondary &&
+      TEAM_COLORS.PHO.name === TEAM_COLORS.PHX.name, "PHO and PHX must carry identical colours");
+    a(canonTri("PHO") === "PHX" && canonTri("pho") === "PHX" && canonTri("SEA") === "SEA",
+      "canonTri must fold PHO into PHX and pass everything else through");
+    ["accent", "ink"].forEach(function (role) {
+      ["dark", "light"].forEach(function (th) {
+        a(derive("PHO", th, role).hex === derive("PHX", th, role).hex,
+          "PHO/PHX derived " + role + " differ on " + th);
+      });
+    });
+    // source spot-checks: one per decision the map documents, so a well-meaning edit that drifts
+    // back off teamcolorcodes.com (or re-invents an expansion club's colour) fails here.
+    a(TEAM_COLORS.ATL.primary === "#C8102E", "ATL off-source (tcc Red, PMS 186)");
+    a(TEAM_COLORS.SEA.secondary === "#FBE122", "SEA off-source (tcc Yellow, PMS 107)");
+    a(TEAM_COLORS.CON.primary === "#DC4405", "CON off-source (tcc Orange; its Red is absent from the mark)");
+    a(TEAM_COLORS.LVA.primary === "#BA0C2F", "LVA off-source (tcc Red; the mark is 100% greyscale)");
+    a(TEAM_COLORS.PDX.primary === "#ED2891", "PDX is measured off the ESPN mark, not invented");
+    a(TEAM_COLORS.TOR.primary === "#441D36", "TOR is measured off the ESPN mark, not invented");
+    a(TEAM_COLORS.GSV.primary === "#B896D4", "GSV is measured off the ESPN mark, not invented");
+
+    // ---- logo slugs ------------------------------------------------------
+    // The map is checked for SHAPE here; check_wnba_identity.py fetches all sixteen.
+    FEED.forEach(function (k) { a(LOGO_SLUG[k], "no logo slug for " + k); });
+    a(Object.keys(LOGO_SLUG).length === 16, "LOGO_SLUG should have one entry per feed key");
+    a(LOGO_SLUG.PDX === "por", "PDX's slug is 'por' -- 'pdx' 404s");
+    a(LOGO_SLUG.PHO === "phx" && LOGO_SLUG.PHX === "phx", "both Phoenix codes map to 'phx'");
+    a(logoURL("pdx") === "https://a.espncdn.com/i/teamlogos/wnba/500/por.png",
+      "logoURL must upper-case and map: got " + logoURL("pdx"));
+    a(/^<img class="wt-logo wt-plate" src="https:\/\/a\.espncdn/.test(logoIMG("SEA", 34)),
+      "logoIMG should plate by default: " + logoIMG("SEA", 34));
+    a(logoIMG("SEA", 34).indexOf("onerror=") > 0, "logoIMG must carry the onerror hide");
+    a(logoIMG("SEA", 34, { plate: false }).indexOf("wt-plate") < 0, "plate:false should drop the plate");
+    a(logoIMG("SEA", 34).indexOf("loading=") < 0 &&
+      logoIMG("SEA", 34, { lazy: true }).indexOf('loading="lazy"') > 0,
+      "logoIMG must be EAGER by default (a lazy mark that never enters the viewport never loads " +
+      "AND never fires onerror -- it renders as a blank plate with no error) and lazy on request");
+    a(teamName("PHO") === "Phoenix Mercury" && teamName("ZZZ") === "ZZZ",
+      "teamName should resolve through the alias and pass an unknown tricode through");
 
     // ---- palette correspondence -----------------------------------------
-    // SURFACE / SITE_ACCENT / SIGN are COPIES of site.css tokens, and a copy
-    // nothing checks is a copy that drifts. Re-read the real stylesheet and
-    // prove each one still matches, so a palette edit that would invalidate
-    // every derived colour fails HERE instead of on the page.
+    // SURFACE / SITE_ACCENT / SIGN / TEXT are COPIES of site.css tokens. This file sits NEXT TO
+    // the FORKED site.css, so the fork's own palette is what gets read -- a WNBA-only token edit
+    // that invalidated every derived colour would fail here.
     var css = require("fs").readFileSync(require("path").join(__dirname, "site.css"), "utf8");
     function tokens(re, label) {
       var block = css.match(re);
-      a(block, "site.css: cannot find the " + label + " :root block — the palette moved");
+      a(block, "site.css: cannot find the " + label + " :root block -- the palette moved");
       var out = {};
       block[1].replace(/(--[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})/g,
         function (m, name, hex) { out[name] = hex.toLowerCase(); return m; });
@@ -567,199 +813,124 @@
       sameToken(th, "--neg", SIGN[th].neg, "SIGN." + th + ".neg");
       sameToken(th, "--text", TEXT[th], "TEXT." + th);
     });
-    sameToken("dark", "--grid", SURFACE.dark, "SURFACE.dark");     // lightest dark surface
-    sameToken("light", "--panel-3", SURFACE.light, "SURFACE.light"); // darkest light surface
+    sameToken("dark", "--grid", SURFACE.dark, "SURFACE.dark");
+    sameToken("light", "--panel-3", SURFACE.light, "SURFACE.light");
 
-    // contrast floors, all 30, both themes, on every surface of that theme —
-    // the surface list is READ FROM site.css too, so a new/edited surface token
-    // is checked automatically instead of being remembered here.
+    // ---- contrast, sign separation, hue, on every surface of both themes --
     var SURFS = { dark: [], light: [] };
     ["dark", "light"].forEach(function (th) {
       ["--bg", "--panel", "--panel-2", "--panel-3", "--grid"].forEach(function (name) {
         a(CSS[th][name], "site.css " + th + " defines no " + name);
         SURFS[th].push(CSS[th][name]);
       });
-      // and the surface we DERIVE against must still be the worst of them —
-      // nearest the mark in luminance. Naming the token (above) catches a
-      // recoloured --panel-3; this catches a palette that grows a NEW surface
-      // darker than it, which the token check could not see.
       var lums = SURFS[th].map(relLum), mine = relLum(SURFACE[th]);
       a(mine === (th === "dark" ? Math.max.apply(null, lums) : Math.min.apply(null, lums)),
-        "SURFACE." + th + " " + SURFACE[th] + " is no longer the worst-case " + th +
-        " surface; derive against the " + (th === "dark" ? "lightest" : "darkest") + " of " +
-        SURFS[th].join(" "));
+        "SURFACE." + th + " " + SURFACE[th] + " is no longer the worst-case " + th + " surface");
     });
-    // The ink floor is pinned by VALUE, not only by the per-colour assertions
-    // below, because those would still pass at the old 0.10 — that is exactly
-    // how a roster column of player names shipped in the same red family as the
-    // negative numbers beside them. Text one cell from a sign colour needs more
-    // separation than a mark does, and this is the line.
-    a(SIGN_DE.ink >= 0.18, "the ink floor is " + SIGN_DE.ink + "; it may not go below 0.18, " +
-      "the largest separation all 30 teams hold with 4.5:1 text contrast and their own hue");
-    a(SIGN_DE.ink > SIGN_DE.accent, "ink is text and must be held further off --pos/--neg " +
-      "than a mark: got ink " + SIGN_DE.ink + " vs accent " + SIGN_DE.accent);
-    // The push budget is pinned by VALUE for the same reason, and it is the more
-    // tempting number of the two to "just nudge": every collision this file has
-    // ever had could be made to go away by letting the separation walk drag a
-    // colour further, and the thing that stops it is not legibility: a light
-    // red at Atlanta's hue is 15.4:1 on --panel-3 and 0.355 clear of --neg at
-    // L 0.20, where the hex is #320003 and the "team colour" is a black smudge.
-    // What stops it is whether the result is still the franchise's. Raising this
-    // is how a team page ends up in a maroon nobody in Atlanta would recognise.
-    // If a colour cannot separate inside the
-    // budget, it takes the fallback and gets NAMED — that is the intended
-    // outcome, not a bigger budget.
-    a(PUSH.accent <= 0.12 && PUSH.ink <= 0.24,
-      "the push budget is accent " + PUSH.accent + " / ink " + PUSH.ink + "; it may not grow " +
-      "past accent 0.12 / ink 0.24 — that is the cap on how far off its brand lightness a " +
-      "franchise's colour can be dragged, and a collision is not a reason to raise it");
-    a(PUSH.ink > PUSH.accent, "ink has to buy " + SIGN_DE.ink + " of separation against the " +
-      "accent's " + SIGN_DE.accent + ", so it must be allowed to travel further: got ink " +
-      PUSH.ink + " vs accent " + PUSH.accent);
-
-    var worstA = 99, worstI = 99, worstAt = "", worstG = { accent: 99, ink: 99 }, worstGAt = {};
+    var worst = { accent: { r: 99, at: "" }, ink: { r: 99, at: "" } };
+    var worstG = { accent: 99, ink: 99 }, worstGAt = {};
     var worstT = { accent: 99, ink: 99 }, worstTAt = {};
     var worstP = { accent: 0, ink: 0 }, worstPAt = { accent: "nobody", ink: "nobody" };
+    var worstAlt = { r: 99, at: "" };
     ["dark", "light"].forEach(function (th) {
       keys.forEach(function (k) {
-        var ac = teamAccent(k, th), ink = teamInk(k, th);
-        a(/^#[0-9a-f]{6}$/.test(ac) && /^#[0-9a-f]{6}$/.test(ink), k + " " + th + " not a hex");
-        SURFS[th].forEach(function (s) {
-          var ca = contrast(ac, s), ci = contrast(ink, s);
-          a(ca >= 3, "accent " + k + "/" + th + " on " + s + " = " + ca.toFixed(2) + " < 3");
-          a(ci >= 4.5, "ink " + k + "/" + th + " on " + s + " = " + ci.toFixed(2) + " < 4.5");
-          if (ca < worstA) { worstA = ca; worstAt = k + "/" + th; }
-          if (ci < worstI) worstI = ci;
-        });
-        // sign separation: no derived colour may be mistakable for --pos/--neg,
-        // or red stops meaning "negative" on that team's page. Per role — the
-        // ink is held further out because it is text sharing a row with a
-        // sign-coloured number, and it has the fallback to get there.
-        [["accent", ac], ["ink", ink]].forEach(function (pair) {
-          var role = pair[0], g = signGap(pair[1], th);
-          a(g >= SIGN_DE[role], role + " " + k + "/" + th + " " + pair[1] + " is dE " +
-            g.toFixed(3) + " from a sign colour (floor " + SIGN_DE[role] + ")");
+        var got = { accent: teamAccent(k, th), ink: teamInk(k, th) };
+        ["accent", "ink"].forEach(function (role) {
+          var hex = got[role];
+          a(/^#[0-9a-f]{6}$/.test(hex), k + " " + th + " " + role + " is not a hex: " + hex);
+          SURFS[th].forEach(function (s) {
+            var c = contrast(hex, s);
+            a(c >= FLOOR[role], role + " " + k + "/" + th + " on " + s + " = " + c.toFixed(2) +
+              " < " + FLOOR[role]);
+            if (c < worst[role].r) { worst[role].r = c; worst[role].at = k + "/" + th + " on " + s; }
+          });
+          var g = signGap(hex, th);
+          a(g >= SIGN_DE[role], role + " " + k + "/" + th + " " + hex + " is dE " + g.toFixed(3) +
+            " from a sign colour (floor " + SIGN_DE[role] + ")");
           if (g < worstG[role]) { worstG[role] = g; worstGAt[role] = k + "/" + th; }
-          // --text distance is MEASURED here and asserted after the fallback
-          // block below, on purpose: "which teams lost their own colour" is the
-          // more informative failure, and asserting it first keeps a raised
-          // sign floor reporting the franchise it cost rather than the body-text
-          // collision that came with it.
-          var t = textGap(pair[1], th);
+          var t = textGap(hex, th);
           if (t < worstT[role]) { worstT[role] = t; worstTAt[role] = k + "/" + th; }
-          // and how much of PUSH[role] this colour spent getting there
           var p = derive(k, th, role).push;
           if (p > worstP[role]) { worstP[role] = p; worstPAt[role] = k + "/" + th; }
-        });
-      });
-    });
-
-    // the greyscale fallback chain: Nets (black -> white -> site accent) and
-    // Spurs (silver -> black -> site accent) must both land on the site accent,
-    // and no other team may be pushed off its primary.
-    a(baseFor("BKN", "dark").src === "site", "BKN should fall through to the site accent");
-    a(baseFor("SAS", "light").src === "site", "SAS should fall through to the site accent");
-    keys.forEach(function (k) {
-      if (k === "BKN" || k === "SAS") return;
-      a(baseFor(k, "dark").src === "primary", k + " unexpectedly left its primary");
-    });
-    a(Math.abs(toOklch(teamAccent("BKN", "dark")).h - toOklch(SITE_ACCENT.dark).h) < 2,
-      "BKN accent should carry the site accent's hue");
-
-    // Hue preservation, every colour: the contrast walk and the sign separation
-    // are both allowed to move LIGHTNESS only, so the hue a viewer reads as "the
-    // team" has to survive both. Checked against the base each colour was
-    // actually given — baseFor's pick (which is already the site accent for the
-    // two greyscale teams), or the site accent for one that fell back.
-    //
-    // BEFORE the fallback list below, and that ordering is load-bearing. This
-    // check names a CAUSE ("the walk rotated") and the list names a CONSEQUENCE
-    // ("this franchise lost its colour"), and a rotation produces both: measured,
-    // a 3-degree rotation of the separation walk's candidates costs ATL and POR
-    // their light accent, so with the list first the report was "a franchise
-    // changed hands" for a defect that is nothing to do with the palette. The
-    // reverse cannot happen — a team that falls back is compared against the site
-    // accent it was actually handed, so falling back never registers as drift.
-    ["dark", "light"].forEach(function (th) {
-      keys.forEach(function (k) {
-        ["accent", "ink"].forEach(function (role) {
+          // hue preservation: both walks move LIGHTNESS only, so the hue a reader takes for
+          // "the team" must survive them, measured against the base this colour was handed.
           var d0 = derive(k, th, role);
           var want = toOklch(d0.brand ? baseFor(k, th).hex : SITE_ACCENT[th]).h;
-          var got = toOklch(d0.hex).h;
-          var d = Math.abs(((got - want + 540) % 360) - 180);
-          a(d < 2.5, k + "/" + th + "/" + role + " hue drifted " + d.toFixed(1) + " deg");
+          var dh = Math.abs(((toOklch(d0.hex).h - want + 540) % 360) - 180);
+          a(dh < 2.5, k + "/" + th + "/" + role + " hue drifted " + dh.toFixed(1) + " deg");
+        });
+        // the SECOND channel has to be a legible mark too, on every surface -- it is what tells
+        // ATL from IND and DAL from MIN from WAS.
+        var alt = teamAlt(k, th);
+        a(/^#[0-9a-f]{6}$/.test(alt), k + " " + th + " alt is not a hex: " + alt);
+        SURFS[th].forEach(function (s) {
+          var c = contrast(alt, s);
+          a(c >= FLOOR.accent, "alt " + k + "/" + th + " on " + s + " = " + c.toFixed(2) + " < 3");
+          if (c < worstAlt.r) { worstAlt.r = c; worstAlt.at = k + "/" + th + " on " + s; }
         });
       });
     });
 
-    // WHICH TEAMS DO NOT WEAR THEIR OWN COLOUR, per role, pinned as an exact set
-    // so a franchise losing its colour is loud rather than invisible. Both roles
-    // are listed because both can now fall back; before the light sign tokens
-    // moved, the accent had no fallback and simply asserted.
-    // Today only the two greyscale brands are on either list — every one of the
-    // other 28 franchises wears its own hue in both roles on both themes — and
-    // the margins are genuinely thin in places: Boston's dark green clears the
-    // ink floor by 0.0005 and Atlanta's light accent clears the mark floor by
-    // 0.0001, so a nudge to --pos/--neg would put those on this list rather than
-    // on the page in a colour a reader could take for the sign of a number.
-    var FALLBACK = { accent: { dark: "BKN,SAS", light: "BKN,SAS" },
-                     ink:    { dark: "BKN,SAS", light: "BKN,SAS" } };
+    // ---- the collisions, pinned ------------------------------------------
+    // ATL/IND ship the same PMS 186 red and DAL/MIN/WAS the same PMS 289 navy, so five of the
+    // fifteen franchises DO derive to a colour another franchise wears. That is pinned as an
+    // exact set rather than hidden: a page that puts two of them side by side must carry the
+    // logo and the second channel. What must hold is that the PAIR is unique -- if that ever
+    // breaks, two franchises are genuinely indistinguishable and the page has no way out.
+    var COLLIDE = "ATL=IND,DAL=MIN,DAL=WAS,MIN=WAS";
+    ["dark", "light"].forEach(function (th) {
+      var byAccent = {}, byPair = {}, same = [];
+      TRICODES.forEach(function (k) {
+        var acc = teamAccent(k, th), pair = acc + "|" + teamAlt(k, th);
+        a(!byPair[pair], "two franchises share the (accent, alt) PAIR on " + th + ": " +
+          byPair[pair] + " and " + k + " -- the identity layer has no second channel left");
+        byPair[pair] = k;
+        (byAccent[acc] = byAccent[acc] || []).push(k);
+      });
+      Object.keys(byAccent).forEach(function (h) {
+        var g = byAccent[h];
+        for (var i = 0; i < g.length; i++)
+          for (var j = i + 1; j < g.length; j++) same.push(g[i] + "=" + g[j]);
+      });
+      a(same.sort().join(",") === COLLIDE, "accent collisions on " + th + " are [" +
+        same.sort().join(",") + "], expected [" + COLLIDE + "]");
+    });
+
+    // ---- who does not wear their own colour ------------------------------
+    // Pinned as an exact set, both roles, both themes. EMPTY is the shipping value: every one of
+    // the fifteen franchises has a hue that clears both floors and stays clear of --pos/--neg.
+    // That is a WNBA-palette fact, not a general one -- the men's file has two greyscale brands
+    // on this list -- and it only holds because LVA's primary is its red rather than its silver
+    // (its mark carries no chromatic pixel at all).
+    var FALLBACK = { accent: { dark: "", light: "" }, ink: { dark: "", light: "" } };
     var fellBack = {};
     ["dark", "light"].forEach(function (th) {
       fellBack[th] = {};
       ["accent", "ink"].forEach(function (role) {
         fellBack[th][role] = keys.filter(function (k) { return !derive(k, th, role).brand; }).sort();
-        // The colour a fallback team is handed needs no separate assertion: the
-        // contrast and sign loops above ran over every colour including these,
-        // and the hue check above holds a fallen-back one to the site accent's hue.
         a(fellBack[th][role].join(",") === FALLBACK[role][th],
           "teams not wearing their own " + role + " on " + th + " are [" +
-          fellBack[th][role].join(",") + "], expected [" + FALLBACK[role][th] +
-          "] — a franchise changed hands with the site accent");
+          fellBack[th][role].join(",") + "], expected [" + FALLBACK[role][th] + "]");
+      });
+      keys.forEach(function (k) {
+        a(baseFor(k, th).src === "primary", k + " unexpectedly left its primary on " + th);
       });
     });
 
-    // THE OTHER SIDE OF THE SIGN FLOOR. Every assertion above measures a derived
-    // colour against --pos/--neg, the surfaces, or its own hue; none of them
-    // measures it against --text, which is the axis the 0.10 -> 0.18 ink change
-    // actually spent (see TEXT_DE). Unguarded, that axis is free to be spent
-    // again: the ink is walked lighter to escape dark --neg, and lighter on this
-    // theme is where body text is, so the next raise trades one collision for
-    // another and every check above still passes.
-    //
-    // A RATCHET pinned to what shipped, not a designed floor. Its job is to make
-    // the trade visible and to fail the next raise loudly. It is also the guard
-    // on PUSH: the separation walk is no longer fenced in by the placement band,
-    // so "spend more lightness" is a thing it can now do, and THIS is what says
-    // how much is too much. Deliberately NOT enforced inside walk() — a
-    // constraint the search satisfies by construction is an assertion that
-    // cannot fail, and this file may not have one of those.
-    //
-    // DELIBERATELY LAST, and it must stay last. Every check above names a cause
-    // (this surface, this sign colour, this franchise, this hue); this one names
-    // a CONSEQUENCE, and its margin is thin by construction — ink clears it by
-    // 0.0012. Run it earlier and it front-runs the diagnostic failures: measured,
-    // a 3-degree hue rotation of the sign-separation walk drags Cleveland's dark
-    // ink to 0.1200 and this assertion fires instead of "hue drifted", reporting
-    // the symptom of a mutation whose actual defect is named twenty lines up.
+    // The --text ratchet, LAST for the same reason it is last upstream: it names a consequence,
+    // and running it earlier front-runs the checks that name a cause.
     ["accent", "ink"].forEach(function (role) {
       a(worstT[role] >= TEXT_DE[role], role + " " + worstTAt[role] + " is dE " +
-        worstT[role].toFixed(4) + " from --text (floor " + TEXT_DE[role] + "). Team " +
-        "colour is drifting into body text — check what was just raised: the only " +
-        "legible way off dark --neg is lighter, and that is where --text lives.");
+        worstT[role].toFixed(4) + " from --text (floor " + TEXT_DE[role] + ")");
     });
-    // NO ordering assertion between TEXT_DE.ink and SIGN_DE.ink, deliberately.
-    // The obvious one — "text must be held further off a sign colour than off
-    // body text" — cannot fail: SIGN_DE.ink is pinned at >= 0.18 above, and at
-    // any sign floor that high the worst ink is <= 0.1212 from --text, so the
-    // per-role assertion just above goes red long before the ordering could.
-    // An assertion that cannot fail reports success either way, which is the one
-    // thing this self-check may not do. The relationship is stated in TEXT_DE.
 
-    console.log("team_colors.js self-check OK — 30/30 teams, both themes, " +
+    console.log("team_colors_wnba.js self-check OK -- 16 keys / 15 franchises, both themes, " +
       SURFS.dark.length + "/" + SURFS.light.length + " surfaces read from site.css\n" +
-      "  contrast   accent min " + worstA.toFixed(2) + ":1 (" + worstAt + ", floor 3)" +
-      "   ink min " + worstI.toFixed(2) + ":1 (floor 4.5)\n" +
+      "  contrast   accent min " + worst.accent.r.toFixed(2) + ":1 (" + worst.accent.at +
+      ", floor 3)\n" +
+      "             ink    min " + worst.ink.r.toFixed(2) + ":1 (" + worst.ink.at +
+      ", floor 4.5)\n" +
+      "             alt    min " + worstAlt.r.toFixed(2) + ":1 (" + worstAlt.at + ", floor 3)\n" +
       "  sign dE    accent min " + worstG.accent.toFixed(4) + " (" + worstGAt.accent +
       ", floor " + SIGN_DE.accent + ")   ink min " + worstG.ink.toFixed(4) +
       " (" + worstGAt.ink + ", floor " + SIGN_DE.ink + ")\n" +
@@ -769,9 +940,7 @@
       "  push L     accent max " + worstP.accent.toFixed(3) + " (" + worstPAt.accent +
       ", budget " + PUSH.accent + ")   ink max " + worstP.ink.toFixed(3) +
       " (" + worstPAt.ink + ", budget " + PUSH.ink + ")\n" +
-      "  accent is not the team's own hue for: dark [" + fellBack.dark.accent.join(" ") +
-      "]  light [" + fellBack.light.accent.join(" ") + "]\n" +
-      "  ink is not the team's own hue for: dark [" + fellBack.dark.ink.join(" ") +
-      "]  light [" + fellBack.light.ink.join(" ") + "]");
+      "  brand-hex collisions (accent shared): " + COLLIDE + "  -- pair still unique 15/15\n" +
+      "  every franchise wears its own hue in both roles on both themes");
   }
 })();
