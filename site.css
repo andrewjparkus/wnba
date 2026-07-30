@@ -408,9 +408,14 @@ a.wt-chip:hover{border-color:var(--team-line,var(--accent));background:var(--tea
 .wt-rail::-webkit-scrollbar{height:6px}
 .wt-rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 .wt-rail>*{scroll-snap-align:start;flex:0 0 auto}
+/* 15 chips, not the men's 30-in-a-<select>: at 10px padding / 60px min the rail measured
+   scrollWidth 1012 against clientWidth 962 at a 1280 viewport, so the 15th chip (CON) was
+   sheared in half with no scroll affordance -- it read as a layout accident. 7px/54px brings
+   the full league inside the panel on desktop; the rail still scrolls on narrow viewports,
+   which is where scrolling is an expected affordance rather than a surprise. */
 .wt-rail a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;
-  padding:var(--sp-2) 10px;border:1px solid var(--line);border-radius:var(--r-1);
-  background:var(--panel);min-width:60px}
+  padding:var(--sp-2) 7px;border:1px solid var(--line);border-radius:var(--r-1);
+  background:var(--panel);min-width:54px}
 .wt-rail a .wt-tri{font-family:var(--font-mono);font-size:var(--fs-1);font-weight:600;
   color:var(--muted);letter-spacing:.3px}
 .wt-rail a:hover{border-color:var(--wt-a,var(--accent))}

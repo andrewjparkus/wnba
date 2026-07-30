@@ -112,7 +112,15 @@
   /* SIX columns: rank, logo, tricode, nickname, bar, value. Every list on this page is a .orow;
      what differs is the template, and each variant must name exactly as many columns as its row
      has children — a short template silently wraps the last child onto a second line. */
+  /* THE SECOND CHANNEL, and it is not decoration. The OKLCh walk certifies contrast but cannot
+     invent hues: six of fifteen franchises collapse onto two accents (ATL=IND red, DAL=MIN=WAS
+     navy, LVA within dE 3 of the reds on light), so on a fifteen-row list the accent alone does
+     NOT identify a team. tvars() already emits --team-2 per row; this is where it earns its keep.
+     3px on the leading edge, the franchise's SECONDARY mark, so adjacent same-accent rows are
+     separable without adding a hue the brand does not own. Falls back to --team, then --accent. */
+  .olist .orow,.plist .orow{border-left:3px solid var(--team-2,var(--team,var(--accent)))}
   .olist .orow{display:grid;align-items:center;gap:var(--sp-2);padding:6px var(--sp-2);
+    padding-left:var(--sp-2);
     margin:0 calc(var(--sp-2) * -1);border-bottom:1px solid var(--line-2);color:var(--text);
     grid-template-columns:18px 24px 34px minmax(0,1fr) minmax(48px,1.4fr) 50px}
   .plist .orow{grid-template-columns:20px 26px minmax(0,1fr) 46px minmax(60px,1fr) 44px}
@@ -675,9 +683,13 @@ function buildStandings(M, order, T) {
     + "odds to " + order.reduce((a, k) => a + T[k].finals_prob, 0).toFixed(2)
     + " — an arithmetic check on the simulation, not on the model. Every distribution is drawn on "
     + "the same fixed 0–" + maxG + " scale"
+    // Kept as a guard, not as live copy: since the Clean-excluded result is recovered into the
+    // standings, every team plays a full 44 and this branch is inert. It fires again only if the
+    // upstream package loses a fixture entirely, and it must not reference a meta key by name --
+    // an earlier version cited missing_from_corpus, which was renamed and would have thrown here.
     + (g43.length ? ", including " + esc(g43.join(" and ")) + ", who play "
-        + T[g43[0]].games_total + " games here because "
-        + M.schedule.missing_from_corpus.n + " scheduled 2026 fixture is absent from the corpus" : "")
+        + T[g43[0]].games_total + " games here because a scheduled 2026 fixture is missing "
+        + "upstream" : "")
     + ".";
 }
 

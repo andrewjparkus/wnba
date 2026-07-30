@@ -20,7 +20,7 @@
    "centring_constant_subtracted": 4.9064,
    "pre_centring_league_mean": 4.9064,
    "pre_centring_sd": 4.7658,
-   "note": "team strength is a 5-man on-floor SUM of board net, and the board is a five-season window whose own mean is not 0, so the raw 15-team mean was +4.91. That constant has been SUBTRACTED from every published strength: 0.0 now means an average 2026 WNBA team. Only DIFFERENCES enter the game model, so the shift changes no projection -- see centring_invariance.",
+   "note": "team strength is a 5-man on-floor SUM of board net, and the board is a five-season window whose own mean is not 0, so the raw 15-team mean was +4.91. That constant has been SUBTRACTED from every published strength: 0.0 now means an average 2026 WNBA team. Only DIFFERENCES enter the game model, so the shift changes no projection -- the simulation is unchanged by it.",
    "raw_level_recoverable": "each team also carries strength_uncentred, so a page that wants the board's own level still has it."
   },
   "centring_invariance": {
@@ -177,7 +177,7 @@
    },
    "diagnostics_season_long": {
     "window_games": 1000000,
-    "raw_minutes_per_team_game_min": 200.0,
+    "raw_minutes_per_team_game_min": 193.51851851851853,
     "raw_minutes_per_team_game_max": 205.76923076923077,
     "players": 227,
     "players_off_board": 13,
@@ -390,8 +390,8 @@
   },
   "schedule": {
    "file": "/Users/andrewpark/Downloads/wnba_decomp_repro_2022-2026_asof_2026-07-23/rapm/nba_pipeline/external/gabriel_wnba/data/wnba_game_dates.csv",
-   "strength_of_schedule": "each team's schedule_remaining.sos is the mean PUBLISHED (centred) strength of its remaining opponents, so positive = harder than average. Home-court is not folded in; the home/away split and per-side SOS are separate. sos_rank 1 = hardest remaining slate.",
-   "games_played_in_corpus": 201,
+   "strength_of_schedule": "each team's remaining schedule.sos is the mean PUBLISHED (centred) strength of its remaining opponents, so positive = harder than average. Home-court is not folded in; the home/away split and per-side SOS are separate. sos_rank 1 = hardest remaining slate.",
+   "games_played_in_corpus": 202,
    "games_remaining": 128,
    "remaining_first_date": "2026-07-28",
    "remaining_last_date": "2026-09-24",
@@ -434,9 +434,12 @@
     "Wings": "DAL"
    },
    "nickname_map_source": "DERIVED from the 201 played 2026 games (schedule nickname vs PBP location+teamtricode); home and away routes agree and each nickname resolves to one tricode",
-   "missing_from_corpus": {
+   "recovered_from_full": {
     "n": 1,
-    "note": "1 scheduled 2026 game (1022600052, 2026-05-27 PDX-CON) is absent from the collaborator package at every stage, so PDX and CON have 43-game seasons here instead of 44. Upstream gap, not introduced."
+    "game_ids": [
+     1022600052
+    ],
+    "note": "Game 1022600052 (2026-05-27, PDX 71 - CON 61) is dropped by the source package's CONSERVATIVE lineup-validation step, not missing from the package: the full normalized play-by-play carries all four periods and a complete score, and the Clean surface removes exactly its 507 rows. A W-L record needs a final score and nothing else, so the result is counted in the standings here while the game stays out of the RAPM solve, where the lineup failure genuinely disqualifies it. An earlier build said it was 'absent at every stage' and published PDX at 10-16; that was wrong."
    }
   },
   "playoff_format": {
@@ -567,16 +570,16 @@
      {
       "seed": 4,
       "assumed_format_seeding": "PHX",
-      "record": "25-17",
+      "record": "27-17",
       "my_derived_seeding": "NYL",
-      "derived_record": "27-16"
+      "derived_record": "27-17"
      },
      {
       "seed": 5,
       "assumed_format_seeding": "NYL",
-      "record": "27-16",
+      "record": "27-17",
       "my_derived_seeding": "PHX",
-      "derived_record": "25-17"
+      "derived_record": "27-17"
      },
      {
       "seed": 6,
@@ -734,18 +737,19 @@
    "route": "max of the running home_score/away_score within a game_id, from the collaborator normalized PBP; team identity from location+teamtricode on the same rows",
    "crosscheck_vs_workstream_C_parquet_route": {
     "n_games_crosschecked": 201,
-    "disagreements": 0
+    "disagreements": 0,
+    "recovered_not_crosschecked": 1
    }
   },
   "caveats": [
-   "No external benchmark exists for the WNBA -- no closing line, no rival metric. Every number here is internal to this pipeline.",
-   "There is no WNBA injury or availability feed. A player who has missed their team's last 10 games has an expected ~0 minutes here even if they are about to return; a player who just went down still carries their recent minutes. The loudest live case is MIN's Napheesa Collier, who played exactly ONE 2026 game (2026-07-22, 22.2 min) and so enters at 2.2 expected mpg -- see minutes.availability_sensitivity and each team's minutes_watchlist.",
+   "No external benchmark exists for the WNBA \u2014 no closing line, no rival metric. Every number here is internal to this pipeline.",
+   "There is no WNBA injury or availability feed. A player who has missed their team's last 10 games has an expected ~0 minutes here even if they are about to return; a player who just went down still carries their recent minutes. The loudest live case is MIN's Napheesa Collier, who played exactly ONE 2026 game (2026-07-22, 22.2 min) and so enters at 2.2 expected mpg. An \u2018if everyone were available\u2019 rebuild is reported alongside, and each team page carries its own minutes watchlist.",
    "Team strength is frozen at the 2026-07-22 board and does not drift, improve or age over the remaining 8 weeks. Only the measured persistent rating error is resampled.",
    "The persistent-team-error variance is itself estimated from 52 team-seasons, so the width of the win-total bands carries real estimation error.",
    "Roster moves after 2026-07-22 (trades, signings, waivers) are invisible.",
-   "The playoff bracket for 2026 is assumed, not published -- see playoff_format.",
-   "The prior-informed board is used because it is the site's default basis and it predicts games marginally better (12.5513 -> 12.4831 OOS margin RMSE, CI excluding zero). It wins only 24 of 42 walk-forward blocks, so that edge is magnitude-driven, not consistent. Switching back to the pure board moves no team's projected wins by more than 0.4 and does not change the standings order or the favourite -- see board_choice.",
-   "Strength is CENTRED on the 15-team mean, so 0.0 is an average 2026 team. The shift is simulation-invariant (centring_invariance) but it is a shift of a five-season board's level onto a one-season league, not a re-solve: a player's own net on the Explorer is still on the board's raw scale."
+   "The playoff bracket for 2026 is assumed, not published \u2014 the assumed bracket is stated above.",
+   "The prior-informed board is used because it is the site's default basis and it predicts games marginally better (12.5513 -> 12.4831 OOS margin RMSE, CI excluding zero). It wins only 24 of 42 walk-forward blocks, so that edge is magnitude-driven, not consistent. Switching back to the pure board moves no team's projected wins by more than 0.4 and does not change the standings order or the favourite \u2014 the board comparison is on the Model page.",
+   "Strength is CENTRED on the 15-team mean, so 0.0 is an average 2026 team. The shift is simulation-invariant \u2014 the whole simulation is bit-identical with and without it \u2014 but it is a shift of a five-season board's level onto a one-season league, not a re-solve: a player's own net on the Explorer is still on the board's raw scale."
   ]
  },
  "standings_order": [
@@ -758,9 +762,9 @@
   "NYL",
   "WAS",
   "PHX",
+  "PDX",
   "CHI",
   "LAS",
-  "PDX",
   "TOR",
   "CON",
   "SEA"
@@ -1020,9 +1024,9 @@
     0.0
    ],
    "playoff_prob": 1.0,
-   "semis_prob": 0.8277,
-   "finals_prob": 0.5761,
-   "title_prob": 0.3761,
+   "semis_prob": 0.8276,
+   "finals_prob": 0.576,
+   "title_prob": 0.376,
    "avg_seed_if_qualified": 1.34,
    "roster": [
     {
@@ -1678,8 +1682,8 @@
    ],
    "playoff_prob": 1.0,
    "semis_prob": 0.7074,
-   "finals_prob": 0.451,
-   "title_prob": 0.2519,
+   "finals_prob": 0.4509,
+   "title_prob": 0.252,
    "avg_seed_if_qualified": 2.68,
    "roster": [
     {
@@ -2283,7 +2287,7 @@
    ],
    "playoff_prob": 1.0,
    "semis_prob": 0.6039,
-   "finals_prob": 0.2874,
+   "finals_prob": 0.2873,
    "title_prob": 0.1331,
    "avg_seed_if_qualified": 3.36,
    "roster": [
@@ -2886,8 +2890,8 @@
     0.0
    ],
    "playoff_prob": 1.0,
-   "semis_prob": 0.4423,
-   "finals_prob": 0.1423,
+   "semis_prob": 0.4424,
+   "finals_prob": 0.1425,
    "title_prob": 0.0392,
    "avg_seed_if_qualified": 3.89,
    "roster": [
@@ -5597,9 +5601,9 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.672,
-   "semis_prob": 0.0773,
-   "finals_prob": 0.0118,
+   "playoff_prob": 0.6622,
+   "semis_prob": 0.0766,
+   "finals_prob": 0.0115,
    "title_prob": 0.0017,
    "avg_seed_if_qualified": 7.81,
    "roster": [
@@ -6273,8 +6277,8 @@
     0.0
    ],
    "playoff_prob": 0.1347,
-   "semis_prob": 0.0249,
-   "finals_prob": 0.0074,
+   "semis_prob": 0.025,
+   "finals_prob": 0.0075,
    "title_prob": 0.0014,
    "avg_seed_if_qualified": 7.96,
    "roster": [
@@ -6683,6 +6687,665 @@
     }
    ]
   },
+  "PDX": {
+   "abbr": "PDX",
+   "name": "Portland Fire",
+   "nickname": "Fire",
+   "w": 11,
+   "l": 16,
+   "gp": 27,
+   "games_remaining": 17,
+   "games_total": 44,
+   "point_diff": -142.0,
+   "strength": -5.19,
+   "strength_uncentred": -0.283,
+   "strength_season_long": -5.968,
+   "strength_all_available": -6.035,
+   "strength_rank": 14,
+   "factors": {
+    "oTS": 2.283,
+    "oTOV": -0.777,
+    "oSC": -0.437,
+    "dTS": -0.132,
+    "dTOV": 0.623,
+    "dSC": -1.843
+   },
+   "factors_dev": {
+    "oTS": 0.56,
+    "oTOV": -1.206,
+    "oSC": -0.981,
+    "dTS": -1.628,
+    "dTOV": 0.084,
+    "dSC": -2.019
+   },
+   "factors_se": {
+    "oTS": 4.186,
+    "oTOV": 1.536,
+    "oSC": 2.085,
+    "dTS": 4.162,
+    "dTOV": 1.527,
+    "dSC": 2.073
+   },
+   "orapm": -1.627,
+   "drapm": -3.563,
+   "schedule_remaining": {
+    "n": 17,
+    "home": 9,
+    "away": 8,
+    "sos": -0.322,
+    "sos_home": -0.768,
+    "sos_away": 0.179,
+    "sos_rank": 10,
+    "opponents": [
+     "ATL",
+     "DAL",
+     "GSV",
+     "IND",
+     "LAS",
+     "LVA",
+     "MIN",
+     "PHX",
+     "SEA",
+     "TOR",
+     "WAS"
+    ],
+    "games": [
+     {
+      "game_id": 1022600206,
+      "date": "2026-07-28",
+      "opp": "LVA",
+      "home": false
+     },
+     {
+      "game_id": 1022600215,
+      "date": "2026-07-31",
+      "opp": "IND",
+      "home": true
+     },
+     {
+      "game_id": 1022600219,
+      "date": "2026-08-02",
+      "opp": "LAS",
+      "home": true
+     },
+     {
+      "game_id": 1022600232,
+      "date": "2026-08-06",
+      "opp": "TOR",
+      "home": true
+     },
+     {
+      "game_id": 1022600238,
+      "date": "2026-08-08",
+      "opp": "SEA",
+      "home": true
+     },
+     {
+      "game_id": 1022600250,
+      "date": "2026-08-12",
+      "opp": "MIN",
+      "home": true
+     },
+     {
+      "game_id": 1022600255,
+      "date": "2026-08-14",
+      "opp": "SEA",
+      "home": false
+     },
+     {
+      "game_id": 1022600260,
+      "date": "2026-08-16",
+      "opp": "PHX",
+      "home": false
+     },
+     {
+      "game_id": 1022600274,
+      "date": "2026-08-21",
+      "opp": "TOR",
+      "home": false
+     },
+     {
+      "game_id": 1022600280,
+      "date": "2026-08-23",
+      "opp": "WAS",
+      "home": true
+     },
+     {
+      "game_id": 1022600285,
+      "date": "2026-08-25",
+      "opp": "DAL",
+      "home": false
+     },
+     {
+      "game_id": 1022600291,
+      "date": "2026-08-28",
+      "opp": "ATL",
+      "home": false
+     },
+     {
+      "game_id": 1022600299,
+      "date": "2026-08-30",
+      "opp": "GSV",
+      "home": true
+     },
+     {
+      "game_id": 1022600304,
+      "date": "2026-09-17",
+      "opp": "PHX",
+      "home": true
+     },
+     {
+      "game_id": 1022600308,
+      "date": "2026-09-18",
+      "opp": "GSV",
+      "home": false
+     },
+     {
+      "game_id": 1022600315,
+      "date": "2026-09-20",
+      "opp": "LAS",
+      "home": false
+     },
+     {
+      "game_id": 1022600323,
+      "date": "2026-09-22",
+      "opp": "GSV",
+      "home": true
+     }
+    ]
+   },
+   "board_minute_coverage": 1.0,
+   "proj_wins": 17.5,
+   "proj_losses": 26.5,
+   "proj_wins_season_long_minutes": 16.8,
+   "proj_wins_all_available": 17.2,
+   "minutes_watchlist": [
+    {
+     "pid": 1630143,
+     "name": "Luisa Geisels\u00f6der",
+     "window_mpg": 4.7,
+     "mpg_when_available": 11.8,
+     "season_mpg": 12.1,
+     "appearances_in_window": 4,
+     "window_games": 10,
+     "net": -1.898,
+     "wins_per_10mpg": -0.219
+    },
+    {
+     "pid": 1643527,
+     "name": "Jordan Harrison",
+     "window_mpg": 3.0,
+     "mpg_when_available": 9.9,
+     "season_mpg": 1.5,
+     "appearances_in_window": 3,
+     "window_games": 10,
+     "net": -1.639,
+     "wins_per_10mpg": -0.186
+    }
+   ],
+   "p2_5": 14.0,
+   "p10": 15.0,
+   "p50": 17.0,
+   "p90": 20.0,
+   "p97_5": 21.0,
+   "win_hist": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0002,
+    0.0026,
+    0.0176,
+    0.0453,
+    0.1036,
+    0.1529,
+    0.1934,
+    0.1877,
+    0.1384,
+    0.0859,
+    0.0478,
+    0.0189,
+    0.0045,
+    0.0008,
+    0.0002,
+    0.0002,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "playoff_prob": 0.0637,
+   "semis_prob": 0.0062,
+   "finals_prob": 0.0006,
+   "title_prob": 0.0,
+   "avg_seed_if_qualified": 7.95,
+   "roster": [
+    {
+     "pid": 1629524,
+     "gid": "w1629524",
+     "name": "Bridget Carleton",
+     "linkable": true,
+     "exp_mpg": 30.7,
+     "season_mpg": 28.2,
+     "mpg_when_available": 32.2,
+     "appearances_in_window": 10,
+     "net": 2.215,
+     "on_board": true,
+     "f": [
+      0.964,
+      0.14,
+      -0.397,
+      1.471,
+      0.516,
+      -0.478
+     ],
+     "f_se": [
+      1.428,
+      0.524,
+      0.711,
+      1.427,
+      0.524,
+      0.711
+     ],
+     "strength_contrib": 0.946,
+     "wins_contrib_remaining": 1.8,
+     "wins_per_10mpg": 0.312
+    },
+    {
+     "pid": 1642304,
+     "gid": "w1642304",
+     "name": "Carla Leite",
+     "linkable": true,
+     "exp_mpg": 27.2,
+     "season_mpg": 23.2,
+     "mpg_when_available": 28.5,
+     "appearances_in_window": 10,
+     "net": 3.028,
+     "on_board": true,
+     "f": [
+      3.211,
+      0.151,
+      -0.79,
+      0.811,
+      0.207,
+      -0.562
+     ],
+     "f_se": [
+      2.241,
+      0.822,
+      1.116,
+      2.238,
+      0.821,
+      1.115
+     ],
+     "strength_contrib": 1.391,
+     "wins_contrib_remaining": 1.85,
+     "wins_per_10mpg": 0.415
+    },
+    {
+     "pid": 1631083,
+     "gid": "w1631083",
+     "name": "Emily Engstler",
+     "linkable": true,
+     "exp_mpg": 24.0,
+     "season_mpg": 23.3,
+     "mpg_when_available": 25.2,
+     "appearances_in_window": 10,
+     "net": 0.072,
+     "on_board": true,
+     "f": [
+      -0.063,
+      -0.135,
+      0.329,
+      0.014,
+      0.25,
+      -0.324
+     ],
+     "f_se": [
+      2.022,
+      0.742,
+      1.007,
+      2.018,
+      0.74,
+      1.005
+     ],
+     "strength_contrib": -0.545,
+     "wins_contrib_remaining": 0.81,
+     "wins_per_10mpg": 0.017
+    },
+    {
+     "pid": 1642782,
+     "gid": "w1642782",
+     "name": "Sarah Ashlee Barker",
+     "linkable": true,
+     "exp_mpg": 22.6,
+     "season_mpg": 23.0,
+     "mpg_when_available": 26.4,
+     "appearances_in_window": 9,
+     "net": -1.171,
+     "on_board": true,
+     "f": [
+      -0.559,
+      -0.565,
+      -0.223,
+      0.147,
+      0.13,
+      -0.1
+     ],
+     "f_se": [
+      2.373,
+      0.871,
+      1.182,
+      2.369,
+      0.869,
+      1.18
+     ],
+     "strength_contrib": -1.217,
+     "wins_contrib_remaining": 0.44,
+     "wins_per_10mpg": -0.146
+    },
+    {
+     "pid": 1629484,
+     "gid": "w1629484",
+     "name": "Megan Gustafson",
+     "linkable": true,
+     "exp_mpg": 22.2,
+     "season_mpg": 20.6,
+     "mpg_when_available": 29.2,
+     "appearances_in_window": 8,
+     "net": -2.064,
+     "on_board": true,
+     "f": [
+      -0.237,
+      0.108,
+      0.172,
+      -1.148,
+      -0.293,
+      -0.665
+     ],
+     "f_se": [
+      2.115,
+      0.776,
+      1.054,
+      2.117,
+      0.777,
+      1.054
+     ],
+     "strength_contrib": -1.693,
+     "wins_contrib_remaining": 0.2,
+     "wins_per_10mpg": -0.262
+    },
+    {
+     "pid": 1643494,
+     "gid": "w1643494",
+     "name": "Frieda Buhner",
+     "linkable": true,
+     "exp_mpg": 16.2,
+     "season_mpg": 12.6,
+     "mpg_when_available": 17.0,
+     "appearances_in_window": 10,
+     "net": -1.769,
+     "on_board": true,
+     "f": [
+      0.483,
+      -0.388,
+      0.459,
+      -1.17,
+      -0.544,
+      -0.609
+     ],
+     "f_se": [
+      3.963,
+      1.454,
+      1.974,
+      3.95,
+      1.449,
+      1.967
+     ],
+     "strength_contrib": -1.114,
+     "wins_contrib_remaining": 0.2,
+     "wins_per_10mpg": -0.216
+    },
+    {
+     "pid": 1642296,
+     "gid": "w1642296",
+     "name": "Nyadiew Puoch",
+     "linkable": true,
+     "exp_mpg": 13.9,
+     "season_mpg": 15.3,
+     "mpg_when_available": 14.6,
+     "appearances_in_window": 10,
+     "net": -2.9,
+     "on_board": true,
+     "f": [
+      -1.699,
+      -0.342,
+      0.319,
+      -0.932,
+      -0.079,
+      -0.167
+     ],
+     "f_se": [
+      3.602,
+      1.322,
+      1.794,
+      3.607,
+      1.323,
+      1.797
+     ],
+     "strength_contrib": -1.346,
+     "wins_contrib_remaining": -0.01,
+     "wins_per_10mpg": -0.355
+    },
+    {
+     "pid": 1643436,
+     "gid": "w1643436",
+     "name": "Serah Williams",
+     "linkable": true,
+     "exp_mpg": 12.9,
+     "season_mpg": 9.9,
+     "mpg_when_available": 13.5,
+     "appearances_in_window": 10,
+     "net": -0.362,
+     "on_board": true,
+     "f": [
+      1.185,
+      -0.668,
+      0.071,
+      -1.502,
+      0.263,
+      0.289
+     ],
+     "f_se": [
+      4.518,
+      1.658,
+      2.251,
+      4.427,
+      1.624,
+      2.205
+     ],
+     "strength_contrib": -0.433,
+     "wins_contrib_remaining": 0.37,
+     "wins_per_10mpg": -0.038
+    },
+    {
+     "pid": 1643506,
+     "gid": "w1643506",
+     "name": "Teja Oblak",
+     "linkable": true,
+     "exp_mpg": 11.1,
+     "season_mpg": 9.6,
+     "mpg_when_available": 11.7,
+     "appearances_in_window": 10,
+     "net": 0.114,
+     "on_board": true,
+     "f": [
+      -1.041,
+      -0.35,
+      0.716,
+      0.936,
+      0.396,
+      -0.544
+     ],
+     "f_se": [
+      4.637,
+      1.701,
+      2.31,
+      4.6,
+      1.688,
+      2.291
+     ],
+     "strength_contrib": -0.241,
+     "wins_contrib_remaining": 0.38,
+     "wins_per_10mpg": 0.021
+    },
+    {
+     "pid": 1628317,
+     "gid": "w1628317",
+     "name": "Karlie Samuelson",
+     "linkable": true,
+     "exp_mpg": 7.9,
+     "season_mpg": 7.4,
+     "mpg_when_available": 13.8,
+     "appearances_in_window": 6,
+     "net": 0.055,
+     "on_board": true,
+     "f": [
+      1.773,
+      -0.242,
+      -1.119,
+      -0.394,
+      0.446,
+      -0.409
+     ],
+     "f_se": [
+      2.494,
+      0.915,
+      1.242,
+      2.491,
+      0.914,
+      1.241
+     ],
+     "strength_contrib": -0.183,
+     "wins_contrib_remaining": 0.27,
+     "wins_per_10mpg": 0.014
+    },
+    {
+     "pid": 1630143,
+     "gid": "w1630143",
+     "name": "Luisa Geisels\u00f6der",
+     "linkable": true,
+     "exp_mpg": 4.5,
+     "season_mpg": 12.1,
+     "mpg_when_available": 11.8,
+     "appearances_in_window": 4,
+     "net": -1.898,
+     "on_board": true,
+     "f": [
+      -1.835,
+      0.204,
+      -0.557,
+      0.425,
+      0.122,
+      -0.256
+     ],
+     "f_se": [
+      2.698,
+      0.99,
+      1.344,
+      2.697,
+      0.99,
+      1.343
+     ],
+     "strength_contrib": -0.323,
+     "wins_contrib_remaining": 0.05,
+     "wins_per_10mpg": -0.219
+    },
+    {
+     "pid": 1641683,
+     "gid": "w1641683",
+     "name": "Holly Winterburn",
+     "linkable": true,
+     "exp_mpg": 4.0,
+     "season_mpg": 4.0,
+     "mpg_when_available": 6.0,
+     "appearances_in_window": 7,
+     "net": -1.468,
+     "on_board": true,
+     "f": [
+      0.475,
+      -0.565,
+      -0.199,
+      -1.102,
+      -0.15,
+      0.073
+     ],
+     "f_se": [
+      7.0,
+      2.569,
+      3.487,
+      6.819,
+      2.502,
+      3.397
+     ],
+     "strength_contrib": -0.247,
+     "wins_contrib_remaining": 0.06,
+     "wins_per_10mpg": -0.167
+    },
+    {
+     "pid": 1643527,
+     "gid": "w1643527",
+     "name": "Jordan Harrison",
+     "linkable": false,
+     "exp_mpg": 2.8,
+     "season_mpg": 1.5,
+     "mpg_when_available": 9.9,
+     "appearances_in_window": 3,
+     "net": -1.639,
+     "on_board": true,
+     "f": [
+      -0.623,
+      0.343,
+      0.317,
+      -1.441,
+      -0.102,
+      -0.133
+     ],
+     "f_se": [
+      10.997,
+      4.035,
+      5.478,
+      10.708,
+      3.929,
+      5.334
+     ],
+     "strength_contrib": -0.185,
+     "wins_contrib_remaining": 0.04,
+     "wins_per_10mpg": -0.186
+    }
+   ]
+  },
   "CHI": {
    "abbr": "CHI",
    "name": "Chicago Sky",
@@ -6942,7 +7605,7 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.0885,
+   "playoff_prob": 0.0886,
    "semis_prob": 0.0156,
    "finals_prob": 0.0037,
    "title_prob": 0.0008,
@@ -7608,8 +8271,8 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.0523,
-   "semis_prob": 0.0059,
+   "playoff_prob": 0.051,
+   "semis_prob": 0.0058,
    "finals_prob": 0.0011,
    "title_prob": 0.0001,
    "avg_seed_if_qualified": 7.96,
@@ -8050,664 +8713,6 @@
     }
    ]
   },
-  "PDX": {
-   "abbr": "PDX",
-   "name": "Portland Fire",
-   "nickname": "Fire",
-   "w": 10,
-   "l": 16,
-   "gp": 26,
-   "games_remaining": 17,
-   "games_total": 43,
-   "point_diff": -152.0,
-   "strength": -5.19,
-   "strength_uncentred": -0.283,
-   "strength_season_long": -5.968,
-   "strength_all_available": -6.035,
-   "strength_rank": 14,
-   "factors": {
-    "oTS": 2.283,
-    "oTOV": -0.777,
-    "oSC": -0.437,
-    "dTS": -0.132,
-    "dTOV": 0.623,
-    "dSC": -1.843
-   },
-   "factors_dev": {
-    "oTS": 0.56,
-    "oTOV": -1.206,
-    "oSC": -0.981,
-    "dTS": -1.628,
-    "dTOV": 0.084,
-    "dSC": -2.019
-   },
-   "factors_se": {
-    "oTS": 4.186,
-    "oTOV": 1.536,
-    "oSC": 2.085,
-    "dTS": 4.162,
-    "dTOV": 1.527,
-    "dSC": 2.073
-   },
-   "orapm": -1.627,
-   "drapm": -3.563,
-   "schedule_remaining": {
-    "n": 17,
-    "home": 9,
-    "away": 8,
-    "sos": -0.322,
-    "sos_home": -0.768,
-    "sos_away": 0.179,
-    "sos_rank": 10,
-    "opponents": [
-     "ATL",
-     "DAL",
-     "GSV",
-     "IND",
-     "LAS",
-     "LVA",
-     "MIN",
-     "PHX",
-     "SEA",
-     "TOR",
-     "WAS"
-    ],
-    "games": [
-     {
-      "game_id": 1022600206,
-      "date": "2026-07-28",
-      "opp": "LVA",
-      "home": false
-     },
-     {
-      "game_id": 1022600215,
-      "date": "2026-07-31",
-      "opp": "IND",
-      "home": true
-     },
-     {
-      "game_id": 1022600219,
-      "date": "2026-08-02",
-      "opp": "LAS",
-      "home": true
-     },
-     {
-      "game_id": 1022600232,
-      "date": "2026-08-06",
-      "opp": "TOR",
-      "home": true
-     },
-     {
-      "game_id": 1022600238,
-      "date": "2026-08-08",
-      "opp": "SEA",
-      "home": true
-     },
-     {
-      "game_id": 1022600250,
-      "date": "2026-08-12",
-      "opp": "MIN",
-      "home": true
-     },
-     {
-      "game_id": 1022600255,
-      "date": "2026-08-14",
-      "opp": "SEA",
-      "home": false
-     },
-     {
-      "game_id": 1022600260,
-      "date": "2026-08-16",
-      "opp": "PHX",
-      "home": false
-     },
-     {
-      "game_id": 1022600274,
-      "date": "2026-08-21",
-      "opp": "TOR",
-      "home": false
-     },
-     {
-      "game_id": 1022600280,
-      "date": "2026-08-23",
-      "opp": "WAS",
-      "home": true
-     },
-     {
-      "game_id": 1022600285,
-      "date": "2026-08-25",
-      "opp": "DAL",
-      "home": false
-     },
-     {
-      "game_id": 1022600291,
-      "date": "2026-08-28",
-      "opp": "ATL",
-      "home": false
-     },
-     {
-      "game_id": 1022600299,
-      "date": "2026-08-30",
-      "opp": "GSV",
-      "home": true
-     },
-     {
-      "game_id": 1022600304,
-      "date": "2026-09-17",
-      "opp": "PHX",
-      "home": true
-     },
-     {
-      "game_id": 1022600308,
-      "date": "2026-09-18",
-      "opp": "GSV",
-      "home": false
-     },
-     {
-      "game_id": 1022600315,
-      "date": "2026-09-20",
-      "opp": "LAS",
-      "home": false
-     },
-     {
-      "game_id": 1022600323,
-      "date": "2026-09-22",
-      "opp": "GSV",
-      "home": true
-     }
-    ]
-   },
-   "board_minute_coverage": 1.0,
-   "proj_wins": 16.5,
-   "proj_losses": 26.5,
-   "proj_wins_season_long_minutes": 15.8,
-   "proj_wins_all_available": 16.2,
-   "minutes_watchlist": [
-    {
-     "pid": 1630143,
-     "name": "Luisa Geisels\u00f6der",
-     "window_mpg": 4.7,
-     "mpg_when_available": 11.8,
-     "season_mpg": 12.5,
-     "appearances_in_window": 4,
-     "window_games": 10,
-     "net": -1.898,
-     "wins_per_10mpg": -0.219
-    },
-    {
-     "pid": 1643527,
-     "name": "Jordan Harrison",
-     "window_mpg": 3.0,
-     "mpg_when_available": 9.9,
-     "season_mpg": 1.6,
-     "appearances_in_window": 3,
-     "window_games": 10,
-     "net": -1.639,
-     "wins_per_10mpg": -0.186
-    }
-   ],
-   "p2_5": 13.0,
-   "p10": 14.0,
-   "p50": 16.0,
-   "p90": 19.0,
-   "p97_5": 20.0,
-   "win_hist": [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0002,
-    0.0026,
-    0.0176,
-    0.0453,
-    0.1036,
-    0.1529,
-    0.1934,
-    0.1877,
-    0.1384,
-    0.0859,
-    0.0478,
-    0.0189,
-    0.0045,
-    0.0008,
-    0.0002,
-    0.0002,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0
-   ],
-   "playoff_prob": 0.052,
-   "semis_prob": 0.0054,
-   "finals_prob": 0.0003,
-   "title_prob": 0.0,
-   "avg_seed_if_qualified": 7.94,
-   "roster": [
-    {
-     "pid": 1629524,
-     "gid": "w1629524",
-     "name": "Bridget Carleton",
-     "linkable": true,
-     "exp_mpg": 30.7,
-     "season_mpg": 29.3,
-     "mpg_when_available": 32.2,
-     "appearances_in_window": 10,
-     "net": 2.215,
-     "on_board": true,
-     "f": [
-      0.964,
-      0.14,
-      -0.397,
-      1.471,
-      0.516,
-      -0.478
-     ],
-     "f_se": [
-      1.428,
-      0.524,
-      0.711,
-      1.427,
-      0.524,
-      0.711
-     ],
-     "strength_contrib": 0.946,
-     "wins_contrib_remaining": 1.8,
-     "wins_per_10mpg": 0.312
-    },
-    {
-     "pid": 1642304,
-     "gid": "w1642304",
-     "name": "Carla Leite",
-     "linkable": true,
-     "exp_mpg": 27.2,
-     "season_mpg": 24.0,
-     "mpg_when_available": 28.5,
-     "appearances_in_window": 10,
-     "net": 3.028,
-     "on_board": true,
-     "f": [
-      3.211,
-      0.151,
-      -0.79,
-      0.811,
-      0.207,
-      -0.562
-     ],
-     "f_se": [
-      2.241,
-      0.822,
-      1.116,
-      2.238,
-      0.821,
-      1.115
-     ],
-     "strength_contrib": 1.391,
-     "wins_contrib_remaining": 1.85,
-     "wins_per_10mpg": 0.415
-    },
-    {
-     "pid": 1631083,
-     "gid": "w1631083",
-     "name": "Emily Engstler",
-     "linkable": true,
-     "exp_mpg": 24.0,
-     "season_mpg": 24.2,
-     "mpg_when_available": 25.2,
-     "appearances_in_window": 10,
-     "net": 0.072,
-     "on_board": true,
-     "f": [
-      -0.063,
-      -0.135,
-      0.329,
-      0.014,
-      0.25,
-      -0.324
-     ],
-     "f_se": [
-      2.022,
-      0.742,
-      1.007,
-      2.018,
-      0.74,
-      1.005
-     ],
-     "strength_contrib": -0.545,
-     "wins_contrib_remaining": 0.81,
-     "wins_per_10mpg": 0.017
-    },
-    {
-     "pid": 1642782,
-     "gid": "w1642782",
-     "name": "Sarah Ashlee Barker",
-     "linkable": true,
-     "exp_mpg": 22.6,
-     "season_mpg": 23.9,
-     "mpg_when_available": 26.4,
-     "appearances_in_window": 9,
-     "net": -1.171,
-     "on_board": true,
-     "f": [
-      -0.559,
-      -0.565,
-      -0.223,
-      0.147,
-      0.13,
-      -0.1
-     ],
-     "f_se": [
-      2.373,
-      0.871,
-      1.182,
-      2.369,
-      0.869,
-      1.18
-     ],
-     "strength_contrib": -1.217,
-     "wins_contrib_remaining": 0.44,
-     "wins_per_10mpg": -0.146
-    },
-    {
-     "pid": 1629484,
-     "gid": "w1629484",
-     "name": "Megan Gustafson",
-     "linkable": true,
-     "exp_mpg": 22.2,
-     "season_mpg": 21.4,
-     "mpg_when_available": 29.2,
-     "appearances_in_window": 8,
-     "net": -2.064,
-     "on_board": true,
-     "f": [
-      -0.237,
-      0.108,
-      0.172,
-      -1.148,
-      -0.293,
-      -0.665
-     ],
-     "f_se": [
-      2.115,
-      0.776,
-      1.054,
-      2.117,
-      0.777,
-      1.054
-     ],
-     "strength_contrib": -1.693,
-     "wins_contrib_remaining": 0.2,
-     "wins_per_10mpg": -0.262
-    },
-    {
-     "pid": 1643494,
-     "gid": "w1643494",
-     "name": "Frieda Buhner",
-     "linkable": true,
-     "exp_mpg": 16.2,
-     "season_mpg": 13.1,
-     "mpg_when_available": 17.0,
-     "appearances_in_window": 10,
-     "net": -1.769,
-     "on_board": true,
-     "f": [
-      0.483,
-      -0.388,
-      0.459,
-      -1.17,
-      -0.544,
-      -0.609
-     ],
-     "f_se": [
-      3.963,
-      1.454,
-      1.974,
-      3.95,
-      1.449,
-      1.967
-     ],
-     "strength_contrib": -1.114,
-     "wins_contrib_remaining": 0.2,
-     "wins_per_10mpg": -0.216
-    },
-    {
-     "pid": 1642296,
-     "gid": "w1642296",
-     "name": "Nyadiew Puoch",
-     "linkable": true,
-     "exp_mpg": 13.9,
-     "season_mpg": 15.9,
-     "mpg_when_available": 14.6,
-     "appearances_in_window": 10,
-     "net": -2.9,
-     "on_board": true,
-     "f": [
-      -1.699,
-      -0.342,
-      0.319,
-      -0.932,
-      -0.079,
-      -0.167
-     ],
-     "f_se": [
-      3.602,
-      1.322,
-      1.794,
-      3.607,
-      1.323,
-      1.797
-     ],
-     "strength_contrib": -1.346,
-     "wins_contrib_remaining": -0.01,
-     "wins_per_10mpg": -0.355
-    },
-    {
-     "pid": 1643436,
-     "gid": "w1643436",
-     "name": "Serah Williams",
-     "linkable": true,
-     "exp_mpg": 12.9,
-     "season_mpg": 10.2,
-     "mpg_when_available": 13.5,
-     "appearances_in_window": 10,
-     "net": -0.362,
-     "on_board": true,
-     "f": [
-      1.185,
-      -0.668,
-      0.071,
-      -1.502,
-      0.263,
-      0.289
-     ],
-     "f_se": [
-      4.518,
-      1.658,
-      2.251,
-      4.427,
-      1.624,
-      2.205
-     ],
-     "strength_contrib": -0.433,
-     "wins_contrib_remaining": 0.37,
-     "wins_per_10mpg": -0.038
-    },
-    {
-     "pid": 1643506,
-     "gid": "w1643506",
-     "name": "Teja Oblak",
-     "linkable": true,
-     "exp_mpg": 11.1,
-     "season_mpg": 9.9,
-     "mpg_when_available": 11.7,
-     "appearances_in_window": 10,
-     "net": 0.114,
-     "on_board": true,
-     "f": [
-      -1.041,
-      -0.35,
-      0.716,
-      0.936,
-      0.396,
-      -0.544
-     ],
-     "f_se": [
-      4.637,
-      1.701,
-      2.31,
-      4.6,
-      1.688,
-      2.291
-     ],
-     "strength_contrib": -0.241,
-     "wins_contrib_remaining": 0.38,
-     "wins_per_10mpg": 0.021
-    },
-    {
-     "pid": 1628317,
-     "gid": "w1628317",
-     "name": "Karlie Samuelson",
-     "linkable": true,
-     "exp_mpg": 7.9,
-     "season_mpg": 7.7,
-     "mpg_when_available": 13.8,
-     "appearances_in_window": 6,
-     "net": 0.055,
-     "on_board": true,
-     "f": [
-      1.773,
-      -0.242,
-      -1.119,
-      -0.394,
-      0.446,
-      -0.409
-     ],
-     "f_se": [
-      2.494,
-      0.915,
-      1.242,
-      2.491,
-      0.914,
-      1.241
-     ],
-     "strength_contrib": -0.183,
-     "wins_contrib_remaining": 0.27,
-     "wins_per_10mpg": 0.014
-    },
-    {
-     "pid": 1630143,
-     "gid": "w1630143",
-     "name": "Luisa Geisels\u00f6der",
-     "linkable": true,
-     "exp_mpg": 4.5,
-     "season_mpg": 12.5,
-     "mpg_when_available": 11.8,
-     "appearances_in_window": 4,
-     "net": -1.898,
-     "on_board": true,
-     "f": [
-      -1.835,
-      0.204,
-      -0.557,
-      0.425,
-      0.122,
-      -0.256
-     ],
-     "f_se": [
-      2.698,
-      0.99,
-      1.344,
-      2.697,
-      0.99,
-      1.343
-     ],
-     "strength_contrib": -0.323,
-     "wins_contrib_remaining": 0.05,
-     "wins_per_10mpg": -0.219
-    },
-    {
-     "pid": 1641683,
-     "gid": "w1641683",
-     "name": "Holly Winterburn",
-     "linkable": true,
-     "exp_mpg": 4.0,
-     "season_mpg": 4.1,
-     "mpg_when_available": 6.0,
-     "appearances_in_window": 7,
-     "net": -1.468,
-     "on_board": true,
-     "f": [
-      0.475,
-      -0.565,
-      -0.199,
-      -1.102,
-      -0.15,
-      0.073
-     ],
-     "f_se": [
-      7.0,
-      2.569,
-      3.487,
-      6.819,
-      2.502,
-      3.397
-     ],
-     "strength_contrib": -0.247,
-     "wins_contrib_remaining": 0.06,
-     "wins_per_10mpg": -0.167
-    },
-    {
-     "pid": 1643527,
-     "gid": "w1643527",
-     "name": "Jordan Harrison",
-     "linkable": false,
-     "exp_mpg": 2.8,
-     "season_mpg": 1.6,
-     "mpg_when_available": 9.9,
-     "appearances_in_window": 3,
-     "net": -1.639,
-     "on_board": true,
-     "f": [
-      -0.623,
-      0.343,
-      0.317,
-      -1.441,
-      -0.102,
-      -0.133
-     ],
-     "f_se": [
-      10.997,
-      4.035,
-      5.478,
-      10.708,
-      3.929,
-      5.334
-     ],
-     "strength_contrib": -0.185,
-     "wins_contrib_remaining": 0.04,
-     "wins_per_10mpg": -0.186
-    }
-   ]
-  },
   "TOR": {
    "abbr": "TOR",
    "name": "Toronto Tempo",
@@ -8953,7 +8958,7 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.0077,
+   "playoff_prob": 0.0076,
    "semis_prob": 0.0012,
    "finals_prob": 0.0001,
    "title_prob": 0.0,
@@ -9338,11 +9343,11 @@
    "name": "Connecticut Sun",
    "nickname": "Sun",
    "w": 7,
-   "l": 19,
-   "gp": 26,
+   "l": 20,
+   "gp": 27,
    "games_remaining": 17,
-   "games_total": 43,
-   "point_diff": -181.0,
+   "games_total": 44,
+   "point_diff": -191.0,
    "strength": -4.885,
    "strength_uncentred": 0.022,
    "strength_season_long": -6.911,
@@ -9503,7 +9508,7 @@
    },
    "board_minute_coverage": 1.0,
    "proj_wins": 13.0,
-   "proj_losses": 30.0,
+   "proj_losses": 31.0,
    "proj_wins_season_long_minutes": 12.1,
    "proj_wins_all_available": 12.8,
    "minutes_watchlist": [
@@ -9512,7 +9517,7 @@
      "name": "Brittney Griner",
      "window_mpg": 18.8,
      "mpg_when_available": 26.9,
-     "season_mpg": 15.9,
+     "season_mpg": 15.3,
      "appearances_in_window": 7,
      "window_games": 10,
      "net": 1.775,
@@ -9523,7 +9528,7 @@
      "name": "Saniya Rivers",
      "window_mpg": 9.2,
      "mpg_when_available": 15.3,
-     "season_mpg": 19.0,
+     "season_mpg": 18.3,
      "appearances_in_window": 6,
      "window_games": 10,
      "net": -0.528,
@@ -9534,7 +9539,7 @@
      "name": "Aneesah Morrow",
      "window_mpg": 3.4,
      "mpg_when_available": 11.4,
-     "season_mpg": 14.5,
+     "season_mpg": 14.0,
      "appearances_in_window": 3,
      "window_games": 10,
      "net": -2.448,
@@ -9590,10 +9595,11 @@
     0.0,
     0.0,
     0.0,
+    0.0,
     0.0
    ],
-   "playoff_prob": 0.0017,
-   "semis_prob": 0.0001,
+   "playoff_prob": 0.0011,
+   "semis_prob": 0.0,
    "finals_prob": 0.0,
    "title_prob": 0.0,
    "avg_seed_if_qualified": 8.0,
@@ -9604,7 +9610,7 @@
      "name": "Charlisse Leger-Walker",
      "linkable": true,
      "exp_mpg": 29.2,
-     "season_mpg": 22.6,
+     "season_mpg": 21.8,
      "mpg_when_available": 29.2,
      "appearances_in_window": 10,
      "net": -1.152,
@@ -9635,7 +9641,7 @@
      "name": "Le\u00efla Lacan",
      "linkable": true,
      "exp_mpg": 28.7,
-     "season_mpg": 19.9,
+     "season_mpg": 19.1,
      "mpg_when_available": 28.7,
      "appearances_in_window": 10,
      "net": 4.752,
@@ -9666,7 +9672,7 @@
      "name": "Olivia Nelson-Ododa",
      "linkable": true,
      "exp_mpg": 25.5,
-     "season_mpg": 17.6,
+     "season_mpg": 16.9,
      "mpg_when_available": 25.5,
      "appearances_in_window": 10,
      "net": 0.946,
@@ -9697,7 +9703,7 @@
      "name": "Diamond Miller",
      "linkable": true,
      "exp_mpg": 24.7,
-     "season_mpg": 22.4,
+     "season_mpg": 21.5,
      "mpg_when_available": 24.7,
      "appearances_in_window": 10,
      "net": -3.119,
@@ -9728,7 +9734,7 @@
      "name": "Kennedy Burke",
      "linkable": true,
      "exp_mpg": 23.2,
-     "season_mpg": 22.7,
+     "season_mpg": 21.9,
      "mpg_when_available": 23.2,
      "appearances_in_window": 10,
      "net": -0.977,
@@ -9759,7 +9765,7 @@
      "name": "Brittney Griner",
      "linkable": true,
      "exp_mpg": 18.8,
-     "season_mpg": 15.9,
+     "season_mpg": 15.3,
      "mpg_when_available": 26.9,
      "appearances_in_window": 7,
      "net": 1.775,
@@ -9790,7 +9796,7 @@
      "name": "Aaliyah Edwards",
      "linkable": true,
      "exp_mpg": 15.9,
-     "season_mpg": 14.4,
+     "season_mpg": 13.9,
      "mpg_when_available": 17.7,
      "appearances_in_window": 9,
      "net": -1.991,
@@ -9821,7 +9827,7 @@
      "name": "Saniya Rivers",
      "linkable": true,
      "exp_mpg": 9.2,
-     "season_mpg": 19.0,
+     "season_mpg": 18.3,
      "mpg_when_available": 15.3,
      "appearances_in_window": 6,
      "net": -0.528,
@@ -9852,7 +9858,7 @@
      "name": "Nell Angloma",
      "linkable": true,
      "exp_mpg": 8.0,
-     "season_mpg": 9.3,
+     "season_mpg": 8.9,
      "mpg_when_available": 8.9,
      "appearances_in_window": 9,
      "net": -1.076,
@@ -9883,7 +9889,7 @@
      "name": "Raegan Beers",
      "linkable": true,
      "exp_mpg": 6.9,
-     "season_mpg": 8.2,
+     "season_mpg": 7.9,
      "mpg_when_available": 8.6,
      "appearances_in_window": 8,
      "net": 0.356,
@@ -9914,7 +9920,7 @@
      "name": "Gianna Kneepkens",
      "linkable": true,
      "exp_mpg": 4.5,
-     "season_mpg": 6.4,
+     "season_mpg": 6.2,
      "mpg_when_available": 6.4,
      "appearances_in_window": 7,
      "net": -1.276,
@@ -9945,7 +9951,7 @@
      "name": "Aneesah Morrow",
      "linkable": true,
      "exp_mpg": 3.4,
-     "season_mpg": 14.5,
+     "season_mpg": 14.0,
      "mpg_when_available": 11.4,
      "appearances_in_window": 3,
      "net": -2.448,
@@ -9976,7 +9982,7 @@
      "name": "Hailey Van Lith",
      "linkable": true,
      "exp_mpg": 1.3,
-     "season_mpg": 6.3,
+     "season_mpg": 6.1,
      "mpg_when_available": 6.4,
      "appearances_in_window": 2,
      "net": -1.547,

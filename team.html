@@ -382,6 +382,9 @@
     font-size:var(--fs-1);font-weight:600}
   :root[data-theme=light] .stalewarn{background:rgba(192,86,0,.12);border-color:rgba(192,86,0,.3);
     color:#8a3d00}
+  /* Lifted from the men's team2027.html:320 along with the caption itself. The bar was inherited
+     without it, which is why the below-replacement strip had no visible explanation. */
+  .wscap{margin:var(--sp-2) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.5;max-width:840px}
 </style></head>
 <body>
 <nav id="topnav" data-active="proj"></nav>
@@ -688,10 +691,13 @@ function render() {
     + '<div class="wt-sub"><b>' + esc(tri) + "</b> · <b>" + t.w + "–" + t.l
     + "</b> through " + t.gp + " of " + t.games_total + " games · <b>" + t.games_remaining
     + "</b> left · point differential <b>" + num(t.point_diff, 0) + "</b>"
+    // Inert while every team plays 44. Left wired for the case where a fixture really does go
+    // missing upstream. The previous copy claimed game 1022600052 was "missing at every stage",
+    // which was false -- it is in the full normalized play-by-play with a complete score and is
+    // dropped only by the package's lineup-validation step, so its RESULT is now counted.
     + (t.games_total < 44
-       ? ' <span class="help" data-tip="A 43-game season, not 44: one scheduled 2026 game'
-         + " (1022600052, 2026-05-27 PDX–CON) is missing from the source package at every"
-         + ' stage. An upstream gap, not one introduced here.">?</span>' : "")
+       ? ' <span class="help" data-tip="A short season: a scheduled 2026 fixture is missing from'
+         + ' the source package. An upstream gap, not one introduced here.">?</span>' : "")
     + "</div></div></div></div>"
     + '<div class="pbody"><div class="hero">';
 
@@ -999,7 +1005,17 @@ function winsStack(roster, left) {
   }
   h += '</div><div class="wsaxis"><span class="z">0</span>'
     + '<span class="t" style="right:' + (100 - Tx).toFixed(3) + '%"><b>' + num(left, 1)
-    + "</b> wins still to come</span></div></div>";
+    + "</b> wins still to come</span></div>"
+    // The men's page states this in VISIBLE caption text (team2027.html:1166-1168); the WNBA
+    // fork inherited the chart and kept the explanation only inside a tooltip, which left the
+    // red sliver on the right end reading as a rendering glitch.
+    + '<p class="wscap">Each block is one player\'s share of the wins still to come, largest '
+    + "first."
+    + (Nn > 0 ? " The strip beneath is what the "
+        + (neg.length === 1 ? "one player below replacement gives"
+                            : neg.length + " players below replacement give")
+        + " back." : "")
+    + "</p></div>";
   return h;
 }
 
